@@ -1,7 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Livewire\Volt\Volt;
 
-Route::get('/', function () {
-    return view('welcome');
+Route::prefix('_')->group(function() {
+
+    Volt::route('', 'login_page');
+
 });
