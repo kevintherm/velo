@@ -124,7 +124,7 @@
 
                 @switch($field->type)
                     @case(\App\Enums\FieldType::Bool)
-                        <x-toggle :label="$field->name" wire:model="form.{{ $field->name }}" />
+                        <x-toggle :label="$field->name" wire:model="form.{{ $field->name }}" id="form-{{ $field->name }}" />
                         @break
                     @case(\App\Enums\FieldType::Email)
                         <x-input :label="$field->name" type="email" wire:model="form.{{ $field->name }}" icon="o-envelope" :required="$field->required"  />
@@ -170,68 +170,106 @@
                 label-div-class="bg-primary/5 flex rounded"
             >
                 <x-tab name="fields-tab" label="Fields">
-                    <div class="space-y-2 px-0.5">
-                        @foreach($collectionForm['fields'] as $index => $field)
-                            @php($field = new App\Models\CollectionField($field))
-                            @php($isDeleted = isset($collectionForm['fields'][$index]['_deleted']) && $collectionForm['fields'][$index]['_deleted'])
+                    <div class="space-y-2 px-0.5" 
+                        x-data="{
+                            sortableInstance: null,
+                            initSortable() {
+                                const el = document.getElementById('sortable-fields-list');
+                                if (window.Sortable && el) {
+                                    if (this.sortableInstance) {
+                                        this.sortableInstance.destroy();
+                                        this.sortableInstance = null;
+                                    }
+                                    
+                                    this.sortableInstance = new Sortable(el, {
+                                        animation: 150,
+                                        handle: '.drag-handle',
+                                        ghostClass: 'bg-primary/10',
+                                        dragClass: 'opacity-50',
+                                        onEnd: (evt) => {
+                                            const items = Array.from(el.children).map(item => item.dataset.fieldId);
+                                            $wire.updateFieldOrder(items);
+                                        }
+                                    });
+                                }
+                            },
+                            destroySortable() {
+                                if (this.sortableInstance) {
+                                    this.sortableInstance.destroy();
+                                    this.sortableInstance = null;
+                                }
+                            }
+                        }"
+                        x-init="initSortable()"
+                        @fields-updated.window="destroySortable(); $nextTick(() => initSortable())"
+                    >
+                        <div id="sortable-fields-list">
+                            @foreach($collectionForm['fields'] as $index => $field)
+                                @php($field = new App\Models\CollectionField($field))
+                                @php($isDeleted = isset($collectionForm['fields'][$index]['_deleted']) && $collectionForm['fields'][$index]['_deleted'])
+                                @php($fieldId = $collectionForm['fields'][$index]['id'] ?? $collectionForm['fields'][$index]['name'] ?? $index)
 
-                            <x-collapse separator :class="$isDeleted ? 'opacity-50 bg-error/5' : ''">
-                                <x-slot:heading>
-                                    <div class="flex items-center gap-2 w-full">
-                                        <x-icon name="{{ $field->getIcon() }}" class="w-4 h-4" />
-                                        <span class="font-semibold" class="{{ $isDeleted ? 'line-through' : '' }}">{{ $field->name }}</span>
-                                        <x-badge value="{{ $field->type->value }}" class="badge-sm badge-ghost" />
-                                        @if($isDeleted)
-                                            <x-badge value="Marked for Deletion" class="badge-sm badge-error" />
-                                        @endif
-                                    </div>
-                                </x-slot:heading>
-                                <x-slot:content>
-                                    @if($isDeleted)
-                                        <div class="flex items-center justify-between p-4 bg-error/10 rounded-lg">
-                                            <div>
-                                                <p class="font-semibold text-error">This field will be deleted when you save.</p>
-                                                <p class="text-sm text-gray-600 mt-1">Click restore to undo this action.</p>
-                                            </div>
-                                            <x-button label="Restore" icon="o-arrow-uturn-left" wire:click="restoreField({{ $index }})" class="btn-sm btn-primary" />
-                                        </div>
-                                    @else
-                                    <div class="space-y-3 pt-2">
-                                        <div class="grid grid-cols-2 gap-4">
-                                                <x-input label="Name" wire:model.blur="collectionForm.fields.{{ $index }}.name" :disabled="$field->locked == true" />
-                                                <x-select label="Type" wire:model.live="collectionForm.fields.{{ $index }}.type" :options="App\Enums\FieldType::toArray()" :icon="$field->getIcon()" :disabled="$field->locked == true" />
-                                                @if ($field->type === App\Enums\FieldType::Text && $field->locked != true)
-                                                    <x-input label="Min Length" type="number" wire:model="collectionForm.fields.{{ $index }}.min_length" placeholder="Default to 0" min="0" :disabled="$field->locked == true" />
-                                                    <x-input label="Max Length" type="number" wire:model="collectionForm.fields.{{ $index }}.max_length" placeholder="Default to 5000" min="0" :disabled="$field->locked == true" />
+                                <div class="flex items-center gap-2 mb-4 group relative" data-field-id="{{ $fieldId }}" wire:key="field-{{ $fieldId }}">
+                                    <x-icon name="o-bars-3" class="w-4 h-4 drag-handle cursor-move text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 absolute left-0 -translate-x-6" />
+                                    <x-collapse separator :class="$isDeleted ? 'opacity-50 bg-error/5' : ''" class="w-full">
+                                        <x-slot:heading>
+                                            <div class="flex items-center gap-2 w-full">
+                                                <x-icon name="{{ $field->getIcon() }}" class="w-4 h-4" />
+                                                <span class="font-semibold" class="{{ $isDeleted ? 'line-through' : '' }}">{{ $field->name }}</span>
+                                                <x-badge value="{{ $field->type->value }}" class="badge-sm badge-ghost" />
+                                                @if($isDeleted)
+                                                    <x-badge value="Marked for Deletion" class="badge-sm badge-error" />
                                                 @endif
-                                        </div>
-                                        <div class="flex items-baseline justify-between gap-6">
-                                            <div class="flex items-center gap-4">
-                                                <x-toggle label="Nonempty" hint="Value cannot be empty" wire:model="collectionForm.fields.{{ $index }}.required" :disabled="$field->locked == true" />
-                                                <x-toggle label="Hidden" hint="Hide field from API response" wire:model="collectionForm.fields.{{ $index }}.hidden" :disabled="$field->locked == true" />
                                             </div>
-                                            <x-dropdown top left>
-                                                <x-slot:trigger>
-                                                    <x-button icon="o-bars-3" class="btn-circle btn-ghost" />
-                                                </x-slot:trigger>
-                                            
-                                                <x-menu-item title="Duplicate" icon="o-document-duplicate" x-on:click="$wire.duplicateField({{ $index }})" />
-                                                @if(!$field->locked)
-                                                    <x-menu-item title="Delete" icon="o-trash" class="text-error" x-on:click="$wire.deleteField({{ $index }})" />
+                                        </x-slot:heading>
+                                        <x-slot:content>
+                                            @if($isDeleted)
+                                                <div class="flex items-center justify-between p-4 bg-error/10 rounded-lg">
+                                                    <div>
+                                                        <p class="font-semibold text-error">This field will be deleted when you save.</p>
+                                                        <p class="text-sm text-gray-600 mt-1">Click restore to undo this action.</p>
+                                                    </div>
+                                                    <x-button label="Restore" icon="o-arrow-uturn-left" wire:click="restoreField({{ $index }})" class="btn-sm btn-primary" />
+                                                </div>
+                                            @else
+                                            <div class="space-y-3 pt-2">
+                                                <div class="grid grid-cols-2 gap-4">
+                                                        <x-input label="Name" wire:model.blur="collectionForm.fields.{{ $index }}.name" :disabled="$field->locked == true" />
+                                                        <x-select label="Type" wire:model.live="collectionForm.fields.{{ $index }}.type" :options="App\Enums\FieldType::toArray()" :icon="$field->getIcon()" :disabled="$field->locked == true" />
+                                                        @if ($field->type === App\Enums\FieldType::Text && $field->locked != true)
+                                                            <x-input label="Min Length" type="number" wire:model="collectionForm.fields.{{ $index }}.min_length" placeholder="Default to 0" min="0" :disabled="$field->locked == true" />
+                                                            <x-input label="Max Length" type="number" wire:model="collectionForm.fields.{{ $index }}.max_length" placeholder="Default to 5000" min="0" :disabled="$field->locked == true" />
+                                                        @endif
+                                                </div>
+                                                <div class="flex items-baseline justify-between gap-6">
+                                                    <div class="flex items-center gap-4">
+                                                        <x-toggle label="Nonempty" hint="Value cannot be empty" wire:model="collectionForm.fields.{{ $index }}.required" :disabled="$field->locked == true" id="required-{{ $fieldId }}" />
+                                                        <x-toggle label="Hidden" hint="Hide field from API response" wire:model="collectionForm.fields.{{ $index }}.hidden" :disabled="$field->locked == true" id="hidden-{{ $fieldId }}" />
+                                                    </div>
+                                                    <x-dropdown top left>
+                                                        <x-slot:trigger>
+                                                            <x-button icon="o-bars-3" class="btn-circle btn-ghost" />
+                                                        </x-slot:trigger>
+                                                    
+                                                        <x-menu-item title="Duplicate" icon="o-document-duplicate" x-on:click="$wire.duplicateField({{ $index }})" />
+                                                        @if(!$field->locked)
+                                                            <x-menu-item title="Delete" icon="o-trash" class="text-error" x-on:click="$wire.deleteField({{ $index }})" />
+                                                        @endif
+                                                    </x-dropdown>
+                                                </div>
+                                                @if($field->rules)
+                                                    <div>
+                                                        <label class="text-xs font-semibold text-gray-600">Validation Rules</label>
+                                                        <p class="text-sm font-mono bg-base-200 p-2 rounded">{{ is_array($field->rules) ? implode(', ', $field->rules) : $field->rules }}</p>
+                                                    </div>
                                                 @endif
-                                            </x-dropdown>
-                                        </div>
-                                        @if($field->rules)
-                                            <div>
-                                                <label class="text-xs font-semibold text-gray-600">Validation Rules</label>
-                                                <p class="text-sm font-mono bg-base-200 p-2 rounded">{{ is_array($field->rules) ? implode(', ', $field->rules) : $field->rules }}</p>
                                             </div>
-                                        @endif
-                                    </div>
-                                    @endif
-                                </x-slot:content>
-                            </x-collapse>
-                        @endforeach
+                                            @endif
+                                        </x-slot:content>
+                                    </x-collapse>
+                                </div>
+                            @endforeach
+                        </div>
 
                         <x-button label="New Field" icon="o-plus" class="w-full btn-outline btn-primary" wire:click="addNewField" />
                     </div>

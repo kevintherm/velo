@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CollectionField extends Model
 {
-    protected $fillable = ['collection_id', 'name', 'type', 'rules', 'unique', 'required', 'indexed', 'locked'];
+    protected $fillable = ['collection_id', 'order', 'name', 'type', 'rules', 'unique', 'required', 'indexed', 'locked'];
 
     protected function casts(): array
     {
@@ -87,5 +87,19 @@ class CollectionField extends Model
         ];
 
         return $fields;
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function (CollectionField $field) {
+            if (is_null($field->order)) {
+                $maxOrder = static::where('collection_id', $field->collection_id)
+                    ->max('order');
+                
+                $field->order = ($maxOrder ?? -1) + 1;
+            }
+        });
     }
 }

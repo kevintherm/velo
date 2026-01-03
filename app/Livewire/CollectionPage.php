@@ -404,6 +404,7 @@ class CollectionPage extends Component
                 $newField = $this->collection->fields()->create([
                     'name' => $fieldData['name'],
                     'type' => $fieldData['type'],
+                    'order' => $fieldData['order'] ?? 999,
                     'required' => $fieldData['required'] ?? false,
                     'unique' => $fieldData['unique'] ?? false,
                     'indexed' => $fieldData['indexed'] ?? false,
@@ -428,7 +429,10 @@ class CollectionPage extends Component
 
 
         $this->fields = $this->collection->fresh()->fields;
+        $this->collectionForm['fields'] = $this->fields->map(fn ($field) => $field->toArray())->toArray();
         $this->showConfigureCollectionDrawer = false;
+
+        $this->dispatch('fields-updated');
 
         if (!empty($changes)) {
             \Log::info('Collection configuration changes', [
@@ -478,6 +482,8 @@ class CollectionPage extends Component
         $fields = $this->collectionForm['fields'];
         array_splice($fields, $index + 1, 0, [$newField]);
         $this->collectionForm['fields'] = $fields;
+
+        $this->dispatch('fields-updated');
 
         $this->info(
             title: 'Field Duplicated',
@@ -556,6 +562,42 @@ class CollectionPage extends Component
         ];
 
         $this->collectionForm['fields'][] = $newField;
+        
+        $this->dispatch('fields-updated');
+    }
+
+    public function updateFieldOrder(array $orderedIds): void
+    {
+        $reorderedFields = [];
+        
+        foreach ($orderedIds as $order => $id) {
+            foreach ($this->collectionForm['fields'] as $field) {
+                if (($field['id'] ?? null) == $id || ($field['name'] ?? null) == $id) {
+                    $field['order'] = $order;
+                    $reorderedFields[] = $field;
+                    
+                    // Update order in database for existing fields
+                    if (isset($field['id'])) {
+                        CollectionField::where('id', $field['id'])->update(['order' => $order]);
+                    }
+                    break;
+                }
+            }
+        }
+        
+        // Add any fields that weren't in the ordered list (new fields without IDs)
+        foreach ($this->collectionForm['fields'] as $field) {
+            $fieldId = $field['id'] ?? $field['name'] ?? null;
+            if ($fieldId && !in_array($fieldId, $orderedIds)) {
+                $field['order'] = count($reorderedFields);
+                $reorderedFields[] = $field;
+            }
+        }
+        
+        $this->collectionForm['fields'] = $reorderedFields;
+        
+        // Don't re-render after reordering to prevent SortableJS conflicts
+        $this->skipRender();
     }
 
     #[On('toast')]

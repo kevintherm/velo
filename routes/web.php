@@ -7,8 +7,8 @@ use Livewire\Volt\Volt;
 Route::prefix('_')->group(function () {
 
     Route::middleware(['auth', 'verified'])->group(function () {
-        Volt::route('collections/{collection:name}', 'collection')->name('collection');
-        // Route::get('collections/{collection:name}', CollectionPage::class)->name('collection');
+        // Volt::route('collections/{collection:name}', 'collection')->name('collection');
+        Route::get('collections/{collection:name}', CollectionPage::class)->name('collection');
         Route::redirect('', '/_/collections/users')->name('home');
 
         Route::get('logout', function () {

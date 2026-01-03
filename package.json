@@ -19,5 +19,8 @@
   "name": "larabase",
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "sortablejs": "^1.15.6"
   }
 }

@@ -15,6 +15,7 @@ return new class extends Migration
         Schema::create('collection_fields', function (Blueprint $table) {
             $table->id();
             $table->foreignId('collection_id')->constrained()->cascadeOnDelete();
+            $table->integer('order')->default(0);
             $table->string('name');
             $table->string('type')->default(FieldType::Text);
             $table->text('rules')->nullable();

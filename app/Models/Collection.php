@@ -22,7 +22,7 @@ class Collection extends Model
 
     public function fields()
     {
-        return $this->hasMany(CollectionField::class);
+        return $this->hasMany(CollectionField::class)->orderBy('order');
     }
 
     public function queryCompiler()
