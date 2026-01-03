@@ -21,6 +21,10 @@ return new class extends Migration
             $table->boolean('required')->default(false);
             $table->boolean('unique')->default(false);
             $table->boolean('indexed')->default(false);
+            $table->boolean('locked')->default(false);
+            $table->boolean('hidden')->default(false);
+            $table->integer('min_length')->default(0);
+            $table->integer('max_length')->default(5000);
             $table->timestamps();
         });
     }

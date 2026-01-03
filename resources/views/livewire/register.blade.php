@@ -1,13 +1,8 @@
 <?php
 
 use function Livewire\Volt\{state, layout, mount, rules};
-use App\Enums\CollectionType;
-use App\Enums\FieldType;
 use App\Models\{Project, User, Collection, CollectionField};
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use App\Helper;
 
 layout('components.layouts.guest');
 
@@ -27,44 +22,7 @@ mount(function() {
 $register = function() {
     $this->validate();
 
-    DB::beginTransaction();
-
-    $project = Project::create([
-        'name' => 'Acme'
-    ]);
-
-    $userCollection = Collection::create([
-        'name' => 'users',
-        'project_id' => $project->id,
-        'type' => CollectionType::Auth,
-    ]);
-
-    $collectionFields = CollectionField::createAuthFrom([
-        [
-            'name' => 'name',
-            'type' => FieldType::Text,
-            'unique' => false,
-            'required' => true,
-        ],
-        [
-            'name' => 'avatar',
-            'type' => FieldType::File,
-            'unique' => false,
-            'required' => false,
-        ],
-    ]);
-
-    foreach($collectionFields as $f) {
-        $userCollection->fields()->create($f);
-    }
-
-    $user = User::create([
-        'name' => 'superuser_' . Str::random(8),
-        'email' => $this->email,
-        'password' => Hash::make($this->password),
-    ]);
-
-    DB::commit();
+    $user = Helper::initProject($this->email, $this->password);
 
     Auth::login($user);
 

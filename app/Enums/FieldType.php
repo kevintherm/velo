@@ -8,7 +8,17 @@ enum FieldType: string
     case Email = 'email';
     case Number = 'number';
     case Bool = 'boolean';
-    case Date = 'date';
-    case Timestamp = 'timestamp';
+    case Datetime = 'datetime';
     case File = 'file';
+    
+    public static function toArray(): array
+    {
+        return array_map(
+            fn ($case) => [
+                'id'   => $case->value,
+                'name' => $case->name,
+            ],
+            self::cases()
+        );
+    }
 }
