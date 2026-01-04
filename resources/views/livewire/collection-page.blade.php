@@ -183,7 +183,7 @@
                 @switch($field->type)
                     @case(\App\Enums\FieldType::Bool)
                         <x-toggle :label="$field->name" wire:model="form.{{ $field->name }}" id="form-{{ $field->name }}" />
-                        @break
+                        @break 
                     @case(\App\Enums\FieldType::Email)
                         <x-input :label="$field->name" type="email" wire:model="form.{{ $field->name }}" icon="o-envelope" :required="$field->required == true" />
                         @break
