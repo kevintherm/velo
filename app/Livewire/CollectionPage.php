@@ -41,15 +41,22 @@ class CollectionPage extends Component
     public string $filter = '';
     public array $sortBy = ['column' => 'created', 'direction' => 'asc'];
     public array $selected = [];
+    public array $fieldsVisibility = [];
 
     public function mount(Collection $collection): void
     {
         $this->collection = $collection;
         $this->fields = $collection->fields;
-        
+
         $this->library = [];
 
-        foreach ($this->fields as $field) {
+        foreach ($this->fields as $i => $field) {
+            $this->fieldsVisibility[$field->name] = $i < 6 || \in_array($field->name, ['created', 'updated']);
+            
+            if ($field->name === 'password') {
+                $this->fieldsVisibility['password'] = false;
+            }
+            
             $this->form[$field->name] = $field->type === FieldType::Bool ? false : '';
             
             if ($field->type === FieldType::File) {
@@ -80,30 +87,37 @@ class CollectionPage extends Component
         $this->resetPage();
     }
 
+    public function toggleField(string $field)
+    {
+        if (!\array_key_exists($field, $this->fieldsVisibility)) return;
+
+        $this->fieldsVisibility[$field] = !$this->fieldsVisibility[$field];
+    }
+
     #[Computed]
     public function tableHeaders(): array
     {
-        $parseFiles = fn($f) => empty($f) ? '-' : implode(' ', array_map(fn($v) => '[IMAGE][' . $v->url . ']', $f));
+        return $this->fields
+            ->filter(fn($f) => isset($this->fieldsVisibility[$f->name]) && $this->fieldsVisibility[$f->name])
+            ->map(function ($f) {
+                $headers = [
+                    'key' => $f->name,
+                    'label' => $f->name,
+                    'format' => null,
+                ];
 
-        return $this->fields->map(function ($f) use ($parseFiles) {
-            $headers = [
-                'key' => $f->name,
-                'label' => $f->name,
-                'format' => null,
-            ];
+                if ($f->type == FieldType::Datetime) {
+                    $headers['format'] = ['date', 'Y-m-d H:i:s'];
+                } elseif ($f->type == FieldType::Bool) {
+                    $headers['format'] = fn($row, $field) => $field ? 'Yes' : 'No';
+                } elseif ($f->type == FieldType::File) {
+                    $headers['format'] = fn($row, $field) => json_encode($field);
+                } else {
+                    $headers['format'] = fn($row, $field) => $field ?: '-';
+                }
 
-            if ($f->type == FieldType::Datetime) {
-                $headers['format'] = ['date', 'Y-m-d H:i:s'];
-            } elseif ($f->type == FieldType::Bool) {
-                $headers['format'] = fn($row, $field) => $field ? 'Yes' : 'No';
-            } elseif ($f->type == FieldType::File) {
-                $headers['format'] = fn($row, $field) => $parseFiles($field);
-            } else {
-                $headers['format'] = fn($row, $field) => $field ?: '-';
-            }
-
-            return $headers;
-        })->toArray();
+                return $headers;
+            })->toArray();
     }
 
     #[Computed]
@@ -151,7 +165,7 @@ class CollectionPage extends Component
             // Sync file fields to storage and update form
             foreach ($this->fields as $field) {
                 if ($field->type === FieldType::File) {
-                    $existingLibrary = is_array($record->data) && isset($record->data[$field->name]) 
+                    $existingLibrary = \is_array($record->data) && isset($record->data[$field->name]) 
                         ? $record->data[$field->name] 
                         : [];
                     
@@ -346,7 +360,7 @@ class CollectionPage extends Component
                     
                     // Load existing library data from form if it exists
                     $existingLibrary = $this->form[$field->name] ?? [];
-                    if (is_array($existingLibrary) && !empty($existingLibrary)) {
+                    if (\is_array($existingLibrary) && !empty($existingLibrary)) {
                         $this->library[$field->name] = collect($existingLibrary);
                     } else {
                         $this->library[$field->name] = collect([]);

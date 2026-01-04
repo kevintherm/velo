@@ -2,4 +2,5 @@ BUG:
 - duplicating a row with files in it will not copy the files from original row, hence pointing to the same file
 
 IMPROVEMENT:
+- refactor file handling
 - add whereIn record query compiler for efficient filtering

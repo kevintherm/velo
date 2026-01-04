@@ -23,7 +23,25 @@
 
     <x-input wire:model.live.debounce.250ms="filter" placeholder="Search term or filter using rules..." icon="o-magnifying-glass" clearable />
 
-    <div class="my-8"></div>
+    <div class="my-4"></div>
+
+    <div class="flex justify-end">
+        <x-dropdown>
+            <x-slot:trigger>
+                <x-button icon="o-table-cells" class="btn-sm" />
+            </x-slot:trigger>
+
+            <x-menu-item title="Toggle Fields" disabled />
+
+            @foreach ($fields as $field)
+                <x-menu-item :wire:key="$field->name" x-on:click.stop="$wire.toggleField('{{ $field->name }}')">
+                    <x-toggle :label="$field->name" :checked="isset($fieldsVisibility[$field->name]) && $fieldsVisibility[$field->name] == true" />
+                </x-menu-item>
+            @endforeach
+        </x-dropdown>
+    </div>
+
+    <div class="my-4"></div>
 
     <x-table 
         :headers="$this->tableHeaders"
@@ -80,6 +98,14 @@
         @endscope
 
         @foreach ($fields as $field)
+        
+            @if ($field->type === App\Enums\FieldType::Bool)
+                @cscope('cell_' . $field->name, $row, $field)
+                    <x-badge :wire:key="$field->name . $row->id" :value="$row->{$field->name} ? 'True' : 'False'" class="{{ $row->{$field->name} ? 'badge-primary' : '' }} badge-soft " />
+                @endcscope
+                @continue
+            @endif
+
             @if ($field->type === App\Enums\FieldType::File)
                 @cscope('cell_' . $field->name, $row, $field)
                     @php
@@ -101,7 +127,7 @@
                         >
                             <div id="gallery-{{ str($row->id . '-' . $field->name)->slug() }}" class="pswp-gallery pswp-gallery--single-column carousel">
                                 @foreach(array_slice($files, 0, 3) as $file)
-                                    <a class="carousel-item" href="{{ $file->url }}" @if(!$file->is_previewable) x-on:click.prevent="window.open('{{ $file->url }}')" @endif target="_blank">
+                                    <a wire:key="{{ $file->uuid }}" class="carousel-item" href="{{ $file->url }}" @if(!$file->is_previewable) x-on:click.prevent="window.open('{{ $file->url }}')" @endif target="_blank">
                                         @if ($file->is_previewable)
                                             <img
                                                 src="{{ $file->url }}"
@@ -120,7 +146,7 @@
                     @else
                         -
                     @endif
-                @endscope
+                @endcscope
             @endif
         @endforeach
 
@@ -176,34 +202,35 @@
             @foreach($fields as $field)
                 @if ($field->name === 'id')
                     <x-input type="text" wire:model="form.id_old" class="hidden" />
-                    <x-input :label="$field->name" type="text" wire:model="form.id" icon="o-key" placeholder="Leave blank to auto generate..." />
+                    <x-input :wire:key="$field->name" :label="$field->name" type="text" wire:model="form.id" icon="o-key" placeholder="Leave blank to auto generate..." />
                     @continue
                 @elseif ($field->name === 'created' || $field->name === 'updated')
-                    <x-input :label="$field->name" type="datetime" wire:model="form.{{ $field->name }}" icon="o-calendar-days" readonly />
+                    <x-input  :wire:key="$field->name" :label="$field->name" type="datetime" wire:model="form.{{ $field->name }}" icon="o-calendar-days" readonly />
                     @continue
                 @elseif ($field->name === 'password' && $field->collection->type === App\Enums\CollectionType::Auth)
-                    <x-password :label="$field->name" wire:model="form.{{ $field->name }}" password-icon="o-lock-closed" placeholder="Fill to change password..." />
+                    <x-password wire:model="form.{{ $field->name }}" class="hidden" />
+                    <x-password :wire:key="$field->name" :label="$field->name" wire:model="form.{{ $field->name }}_new" password-icon="o-lock-closed" placeholder="Fill to change password..." />
                     @continue
                 @endif
 
                 @switch($field->type)
                     @case(\App\Enums\FieldType::Bool)
-                        <x-toggle :label="$field->name" wire:model="form.{{ $field->name }}" id="form-{{ $field->name }}" />
+                        <x-toggle :wire:key="$field->name" :label="$field->name" wire:model="form.{{ $field->name }}" id="form-{{ $field->name }}" />
                         @break 
                     @case(\App\Enums\FieldType::Email)
-                        <x-input :label="$field->name" type="email" wire:model="form.{{ $field->name }}" icon="o-envelope" :required="$field->required == true" />
+                        <x-input :wire:key="$field->name" :label="$field->name" type="email" wire:model="form.{{ $field->name }}" icon="o-envelope" :required="$field->required == true" />
                         @break
                     @case(\App\Enums\FieldType::Number)
-                        <x-input :label="$field->name" type="number" wire:model="form.{{ $field->name }}" icon="o-hashtag" :required="$field->required == true" />
+                        <x-input :wire:key="$field->name" :label="$field->name" type="number" wire:model="form.{{ $field->name }}" icon="o-hashtag" :required="$field->required == true" />
                         @break
                     @case(\App\Enums\FieldType::Datetime)
-                        <x-input :label="$field->name" type="datetime" wire:model="form.{{ $field->name }}" icon="o-calendar-days" :required="$field->required == true" />
+                        <x-input :wire:key="$field->name" :label="$field->name" type="datetime" wire:model="form.{{ $field->name }}" icon="o-calendar-days" :required="$field->required == true" />
                         @break
                     @case(\App\Enums\FieldType::File)
-                            <x-file-library :label="$field->name" wire:model="files.{{ $field->name }}" wire:library="library.{{ $field->name }}" :preview="data_get($library, $field->name, collect([]))" hint="rule" accept="*" />
+                            <x-file-library :wire:key="$field->name" :label="$field->name" wire:model="files.{{ $field->name }}" wire:library="library.{{ $field->name }}" :preview="data_get($library, $field->name, collect([]))" hint="rule" accept="*" />
                         @break
                     @default
-                        <x-input :label="$field->name" wire:model="form.{{ $field->name }}" icon="lucide.text-cursor" :required="$field->required == true" />
+                        <x-input :wire:key="$field->name" :label="$field->name" wire:model="form.{{ $field->name }}" icon="lucide.text-cursor" :required="$field->required == true" />
                 @endswitch
             @endforeach
         
@@ -310,8 +337,8 @@
                                                 </div>
                                                 <div class="flex items-baseline justify-between gap-6">
                                                     <div class="flex items-center gap-4">
-                                                        <x-toggle label="Nonempty" hint="Value cannot be empty" wire:model="collectionForm.fields.{{ $index }}.required" :disabled="$field->locked == true" id="required-{{ $fieldId }}" />
-                                                        <x-toggle label="Hidden" hint="Hide field from API response" wire:model="collectionForm.fields.{{ $index }}.hidden" :disabled="$field->locked == true" id="hidden-{{ $fieldId }}" />
+                                                        <x-toggle label="Nonempty" hint="Value cannot be empty" wire:model="collectionForm.fields.{{ $index }}.required" :disabled="$field->locked == true" />
+                                                        <x-toggle label="Hidden" hint="Hide field from API response" wire:model="collectionForm.fields.{{ $index }}.hidden" :disabled="$field->locked == true" />
                                                     </div>
                                                     <x-dropdown top left>
                                                         <x-slot:trigger>
