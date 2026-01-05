@@ -2,6 +2,8 @@
 
 namespace App\Services\IndexStrategies;
 
+use App\Constracts\IndexStrategy;
+use App\Helper;
 use App\Models\Collection;
 use App\Exceptions\IndexOperationException;
 use Illuminate\Support\Facades\DB;
@@ -11,8 +13,7 @@ class PostgresIndexStrategy implements IndexStrategy
     public function createIndex(Collection $collection, string $fieldName, bool $unique = false): void
     {
         try {
-            $prefix = $unique ? 'uq' : 'idx';
-            $indexName = "{$prefix}_{$collection->id}_{$fieldName}";
+            $indexName = Helper::generateIndexName($collection, $fieldName, $unique);
 
             $sql = "
                 CREATE " . ($unique ? 'UNIQUE ' : '') . "INDEX IF NOT EXISTS {$indexName}
@@ -52,5 +53,10 @@ class PostgresIndexStrategy implements IndexStrategy
         } catch (\Exception $e) {
             throw new IndexOperationException("Failed to drop PostgreSQL index for field '{$fieldName}': " . $e->getMessage(), 0, $e);
         }
+    }
+
+    public function hasIndex(string $indexName): bool
+    {
+        throw new \Exception("Not implemented.");
     }
 }

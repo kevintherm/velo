@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
+use App\Constracts\IndexStrategy;
 use App\Models\Collection;
-use App\Services\IndexStrategies\IndexStrategy;
 use App\Services\IndexStrategies\MysqlIndexStrategy;
 use App\Services\IndexStrategies\PostgresIndexStrategy;
 use Illuminate\Support\Facades\DB;

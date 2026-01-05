@@ -39,12 +39,14 @@ class Helper
                 'type' => FieldType::Text,
                 'unique' => false,
                 'required' => true,
+                'options' => [],
             ],
             [
                 'name' => 'avatar',
                 'type' => FieldType::File,
                 'unique' => false,
                 'required' => false,
+                'options' => [],
             ],
         ]);
 
@@ -61,5 +63,24 @@ class Helper
         DB::commit();
 
         return $user;
+    }
+
+    public static function generateIndexName(Collection $collection, string $fieldName, bool $unique): string
+    {
+        $prefix = $unique ? 'uq' : 'idx';
+        return "{$prefix}_{$collection->id}_{$fieldName}";
+    }
+
+    public static function getFieldTypeIcon($name, $type) {
+        if ($name === 'id') return 'lucide.key';
+        if ($name === 'password') return 'lucide.lock';
+        return match ($type) {
+            FieldType::Number => 'lucide.hash',
+            FieldType::Email => 'lucide.mail',
+            FieldType::Bool => 'lucide.toggle-right',
+            FieldType::Datetime => 'lucide.calendar-clock',
+            FieldType::File => 'lucide.image',
+            default => 'lucide.text-cursor',
+        };
     }
 }

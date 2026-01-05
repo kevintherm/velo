@@ -2,19 +2,22 @@
 
 namespace App\Models;
 
+use App\Casts\FieldOptionCast;
 use App\Enums\FieldType;
+use App\Helper;
 use App\Models\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CollectionField extends Model
 {
-    protected $fillable = ['collection_id', 'order', 'name', 'type', 'rules', 'unique', 'required', 'indexed', 'locked'];
+    protected $fillable = ['collection_id', 'order', 'name', 'type', 'rules', 'unique', 'required', 'indexed', 'locked', 'options'];
 
     protected function casts(): array
     {
         return [
-            'type' => FieldType::class
+            'type' => FieldType::class,
+            'options' => FieldOptionCast::class,
         ];
     }
 
@@ -24,16 +27,7 @@ class CollectionField extends Model
     }
 
     public function getIcon() {
-        if ($this->name === 'id') return 'lucide.key';
-        if ($this->name === 'password') return 'lucide.lock';
-        return match ($this->type) {
-            FieldType::Number => 'lucide.hash',
-            FieldType::Email => 'lucide.mail',
-            FieldType::Bool => 'lucide.toggle-right',
-            FieldType::Datetime => 'lucide.calendar-clock',
-            FieldType::File => 'lucide.image',
-            default => 'lucide.text-cursor',
-        };
+        return Helper::getFieldTypeIcon($this->name, $this->type);
     }
 
     public static function createAuthFrom($fields): array
@@ -44,28 +38,32 @@ class CollectionField extends Model
                 'type' => FieldType::Text,
                 'unique' => true,
                 'required' => true,
-                'locked' => true
+                'locked' => true,
+                'options' => [],
             ],
             [
                 'name' => 'email',
                 'type' => FieldType::Email,
                 'unique' => true,
                 'required' => true,
-                'locked' => true
+                'locked' => true,
+                'options' => [],
             ],
             [
                 'name' => 'verified',
                 'type' => FieldType::Bool,
                 'unique' => false,
                 'required' => false,
-                'locked' => true
+                'locked' => true,
+                'options' => [],
             ],
             [
                 'name' => 'password',
                 'type' => FieldType::Text,
                 'unique' => false,
                 'required' => true,
-                'locked' => true
+                'locked' => true,
+                'options' => [],
             ],
 
             ...$fields,
@@ -75,14 +73,16 @@ class CollectionField extends Model
                 'type' => FieldType::Datetime,
                 'unique' => false,
                 'required' => false,
-                'locked' => true
+                'locked' => true,
+                'options' => [],
             ],
             [
                 'name' => 'updated',
                 'type' => FieldType::Datetime,
                 'unique' => false,
                 'required' => false,
-                'locked' => true
+                'locked' => true,
+                'options' => [],
             ],
         ];
 
@@ -93,12 +93,16 @@ class CollectionField extends Model
     {
         parent::boot();
 
-        static::creating(function (CollectionField $field) {
-            if (is_null($field->order)) {
+        static::saving(function (CollectionField $field) {
+            if ($field->exists && $field->order == null) {
                 $maxOrder = static::where('collection_id', $field->collection_id)
                     ->max('order');
                 
                 $field->order = ($maxOrder ?? -1) + 1;
+            }
+
+            if ($field->options == null) {
+                $field->options = [];
             }
         });
     }

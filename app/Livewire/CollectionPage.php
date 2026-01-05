@@ -4,7 +4,7 @@ namespace App\Livewire;
 
 use App\Enums\{FieldType, CollectionType};
 use App\Models\{Collection, CollectionField, Record};
-use App\Services\{RecordQueryCompiler,RecordRulesCompiler};
+use App\Services\{CompareArrays, RecordQueryCompiler, RecordRulesCompiler};
 use App\Traits\FileLibrarySync;
 use Livewire\Attributes\{Computed, Title, On, Rule};
 use Livewire\Component;
@@ -44,8 +44,7 @@ class CollectionPage extends Component
     public function mount(Collection $collection): void
     {
         $this->collection = $collection;
-        $this->fields = $collection->fields;
-
+        $this->fields = $this->collection->fields;
         $this->library = [];
 
         // Preload forms for snappier feels
@@ -53,13 +52,13 @@ class CollectionPage extends Component
 
         foreach ($this->fields as $i => $field) {
             $this->fieldsVisibility[$field->name] = $i < 6 || \in_array($field->name, ['created', 'updated']);
-            
+
             if ($field->name === 'password') {
                 $this->fieldsVisibility['password'] = false;
             }
-            
+
             $this->form[$field->name] = $field->type === FieldType::Bool ? false : '';
-            
+
             if ($field->type === FieldType::File) {
                 $this->files[$field->name] = [];
                 $this->library[$field->name] = collect([]);
@@ -90,7 +89,8 @@ class CollectionPage extends Component
 
     public function toggleField(string $field)
     {
-        if (!\array_key_exists($field, $this->fieldsVisibility)) return;
+        if (!\array_key_exists($field, $this->fieldsVisibility))
+            return;
 
         $this->fieldsVisibility[$field] = !$this->fieldsVisibility[$field];
     }
@@ -162,14 +162,14 @@ class CollectionPage extends Component
         unset($this->form['id_old']);
 
         if ($record) {
-            
+
             // Sync file fields to storage and update form
             foreach ($this->fields as $field) {
                 if ($field->type === FieldType::File) {
-                    $existingLibrary = \is_array($record->data) && isset($record->data[$field->name]) 
-                        ? $record->data[$field->name] 
+                    $existingLibrary = \is_array($record->data) && isset($record->data[$field->name])
+                        ? $record->data[$field->name]
                         : [];
-                    
+
                     if (!empty($this->files[$field->name])) {
                         $updatedLibrary = $this->syncMedia(
                             library: "library.{$field->name}",
@@ -177,7 +177,7 @@ class CollectionPage extends Component
                             storage_subpath: "collections/{$this->collection->name}/{$record->data['id']}/{$field->name}",
                             existingLibrary: $existingLibrary
                         );
-                        
+
                         $this->form[$field->name] = $updatedLibrary->toArray();
                     } else {
                         // Just update library if files were removed but not added
@@ -207,11 +207,11 @@ class CollectionPage extends Component
                         storage_subpath: "collections/{$this->collection->name}/{$record->data['id']}/{$field->name}",
                         existingLibrary: []
                     );
-                    
+
                     $this->form[$field->name] = $updatedLibrary->toArray();
                 }
             }
-            
+
             // Update record with file URLs if any were uploaded
             if (collect($this->fields)->where('type', FieldType::File)->isNotEmpty()) {
                 $record->update([
@@ -224,13 +224,13 @@ class CollectionPage extends Component
 
         foreach ($this->fields as $field) {
             $this->form[$field->name] = $field->type === FieldType::Bool ? false : '';
-            
+
             if ($field->type === FieldType::File) {
                 $this->files[$field->name] = [];
                 $this->library[$field->name] = collect([]);
             }
         }
-        
+
         unset($this->tableRows);
 
         $this->success(
@@ -243,7 +243,7 @@ class CollectionPage extends Component
         );
     }
 
-    public function show(string $id): void 
+    public function show(string $id): void
     {
         $compiler = new RecordQueryCompiler($this->collection);
         $result = $compiler->filter('id', '=', $id)->first();
@@ -286,11 +286,11 @@ class CollectionPage extends Component
             }
         } else {
             $this->form = $data;
-            
+
             foreach ($this->fields as $field) {
                 if ($field->type === FieldType::File) {
                     $this->files[$field->name] = [];
-                    
+
                     // Load existing library data from form if it exists
                     $existingLibrary = $this->form[$field->name] ?? [];
                     if (\is_array($existingLibrary) && !empty($existingLibrary)) {
@@ -300,10 +300,10 @@ class CollectionPage extends Component
                     }
                 }
             }
-        }        
+        }
     }
 
-    public function duplicate(string $id): void 
+    public function duplicate(string $id): void
     {
         $compiler = new RecordQueryCompiler($this->collection);
         $result = $compiler->filter('id', '=', $id)->first();
@@ -359,7 +359,7 @@ class CollectionPage extends Component
         $this->showConfirmDeleteDialog = false;
         $this->recordToDelete = [];
         $this->selected = [];
-        
+
         unset($this->tableRows);
 
         $this->success(
@@ -374,23 +374,30 @@ class CollectionPage extends Component
 
     public function saveCollectionConfiguration(): void
     {
-        $this->validate([
-            'collectionForm.name' => 'required|string|regex:/^[a-zA-Z_]+$/|max:255',
-        ],
-        [
-            'collectionForm.name.regex' => 'Only letters and underscore are allowed.'
-        ]);
+        $this->validate(
+            [
+                'collectionForm.name' => 'required|string|regex:/^[a-zA-Z_]+$/|max:255',
+            ],
+            [
+                'collectionForm.name.regex' => 'Only letters and underscore are allowed.'
+            ]
+        );
 
-        $oldFields = $this->fields->keyBy('id')->toArray();
-        $newFields = collect($this->collectionForm['fields'])->keyBy('id')->toArray();
+        $oldFields = $this->fields->mapWithKeys(function ($f) {
+            $fieldArray = $f->toArray();
+            if ($f->options) {
+                $fieldArray['options'] = $f->options->toArray();
+            }
+            return [$f->id => $fieldArray];
+        })->toArray();
 
         $validationRules = [];
         $validationMessages = [];
-        
+
         foreach ($this->collectionForm['fields'] as $index => $fieldData) {
             $fieldId = $fieldData['id'] ?? null;
             $oldField = $oldFields[$fieldId] ?? null;
-            
+
             if ($oldField && $oldField['locked']) {
                 if ($oldField['name'] !== $fieldData['name']) {
                     $this->addError(
@@ -408,9 +415,9 @@ class CollectionPage extends Component
 
             $validationRules["collectionForm.fields.{$index}.name"] = 'required|string|regex:/^[a-zA-Z_][a-zA-Z0-9_]*$/|max:255';
             $validationMessages["collectionForm.fields.{$index}.name.regex"] = 'Field name must start with a letter or underscore and contain only letters, numbers, and underscores.';
-            
+
             $validationRules["collectionForm.fields.{$index}.type"] = 'required|string';
-            
+
             if (isset($fieldData['type']) && $fieldData['type'] === FieldType::Text->value) {
                 if (isset($fieldData['min_length'])) {
                     $validationRules["collectionForm.fields.{$index}.min_length"] = 'nullable|integer|min:0';
@@ -445,53 +452,24 @@ class CollectionPage extends Component
             return;
         }
 
-        $changes = [];
         foreach ($this->collectionForm['fields'] as $fieldData) {
             $fieldId = $fieldData['id'] ?? null;
-            $oldField = $oldFields[$fieldId] ?? null;
-            
-            if ($oldField) {
-                $fieldChanges = [];
-                
-                foreach (['name', 'type', 'required', 'unique', 'indexed', 'hidden', 'min_length', 'max_length'] as $prop) {
-                    $oldValue = $oldField[$prop] ?? null;
-                    $newValue = $fieldData[$prop] ?? null;
-                    
-                    if ($oldValue != $newValue) {
-                        $fieldChanges[$prop] = [
-                            'old' => $oldValue,
-                            'new' => $newValue,
-                        ];
-                    }
-                }
-                
-                if (!empty($fieldChanges)) {
-                    $changes[$fieldData['name']] = $fieldChanges;
-                }
-            }
-        }
 
-        $newFieldIds = [];
-        
-        foreach ($this->collectionForm['fields'] as $fieldData) {
-            $fieldId = $fieldData['id'] ?? null;
-            
             if (isset($fieldData['_deleted']) && $fieldData['_deleted']) {
                 continue;
             }
-            
+
             if ($fieldId) {
                 $field = CollectionField::find($fieldId);
-                
+
                 if ($field) {
-                    $newFieldIds[] = $fieldId;
                     $updateData = [];
-                    
+
                     if (!$field->locked) {
                         $updateData['name'] = $fieldData['name'];
                         $updateData['type'] = $fieldData['type'];
                     }
-                    
+
                     if (isset($fieldData['required'])) {
                         $updateData['required'] = $fieldData['required'];
                     }
@@ -504,13 +482,9 @@ class CollectionPage extends Component
                     if (isset($fieldData['hidden'])) {
                         $updateData['hidden'] = $fieldData['hidden'];
                     }
-                    if (isset($fieldData['min_length'])) {
-                        $updateData['min_length'] = $fieldData['min_length'] ?? 0;
-                    }
-                    if (isset($fieldData['max_length'])) {
-                        $updateData['max_length'] = $fieldData['max_length'] ?? 5000;
-                    }
                     
+                    $updateData['options'] = $fieldData['options'];
+
                     if (!empty($updateData)) {
                         $field->update($updateData);
                     }
@@ -528,16 +502,13 @@ class CollectionPage extends Component
                     'min_length' => $fieldData['min_length'] ?? 0,
                     'max_length' => $fieldData['max_length'] ?? 5000,
                 ]);
-                $newFieldIds[] = $newField->id;
             }
         }
 
-        $deletedCount = 0;
         foreach ($this->collectionForm['fields'] as $fieldData) {
             if (isset($fieldData['_deleted']) && $fieldData['_deleted'] && isset($fieldData['id'])) {
                 if (!($fieldData['locked'] ?? false)) {
                     CollectionField::find($fieldData['id'])?->delete();
-                    $deletedCount++;
                 }
             }
         }
@@ -553,21 +524,21 @@ class CollectionPage extends Component
 
 
         $this->fields = $this->collection->fresh()->fields;
-        $this->collectionForm['fields'] = $this->fields->map(fn ($field) => $field->toArray())->toArray();
+        $this->collectionForm['fields'] = $this->fields->map(function ($f) {
+            $fieldArray = $f->toArray();
+            if ($f->options) {
+                $fieldArray['options'] = $f->options->toArray();
+            }
+            return $fieldArray;
+        })->toArray();
+
         $this->showConfigureCollectionDrawer = false;
 
         $this->dispatch('fields-updated');
 
-        if (!empty($changes)) {
-            \Log::info('Collection configuration changes', [
-                'collection' => $this->collection->name,
-                'changes' => $changes,
-            ]);
-        }
-
         $this->success(
             title: 'Success!',
-            description: "Collection configuration updated successfully" . (!empty($changes) ? " (" . count($changes) . " ". str('field')->plural(count($changes)) ." modified)" : "") . ($deletedCount > 0 ? " (" . $deletedCount . " ". str('field')->plural($deletedCount) ." deleted)" : ""),
+            description: "Collection configuration updated successfully.",
             position: 'toast-bottom toast-end',
             icon: 'o-check-circle',
             css: 'alert-success',
@@ -578,7 +549,13 @@ class CollectionPage extends Component
     public function fillCollectionForm()
     {
         $this->collectionForm = $this->collection->toArray();
-        $this->collectionForm['fields'] = $this->fields->toArray();
+        $this->collectionForm['fields'] = $this->fields->map(function ($f) {
+            $fieldArray = $f->toArray();
+            if ($f->options) {
+                $fieldArray['options'] = $f->options->toArray();
+            }
+            return $fieldArray;
+        })->toArray();
     }
 
     public function duplicateField(int $index): void
@@ -596,12 +573,12 @@ class CollectionPage extends Component
         }
 
         $fieldToDuplicate = $this->collectionForm['fields'][$index];
-        
+
         $newField = $fieldToDuplicate;
         unset($newField['id']);
         $newField['name'] = $fieldToDuplicate['name'] . '_copy';
         $newField['locked'] = false;
-        
+
         $fields = $this->collectionForm['fields'];
         array_splice($fields, $index + 1, 0, [$newField]);
         $this->collectionForm['fields'] = $fields;
@@ -624,7 +601,7 @@ class CollectionPage extends Component
         }
 
         $fieldToDelete = $this->collectionForm['fields'][$index];
-        
+
         if ($fieldToDelete['locked'] ?? false) {
             $this->error(
                 title: 'Cannot Delete',
@@ -656,7 +633,7 @@ class CollectionPage extends Component
         }
 
         $fieldToRestore = $this->collectionForm['fields'][$index];
-        
+
         unset($this->collectionForm['fields'][$index]['_deleted']);
     }
 
@@ -670,26 +647,25 @@ class CollectionPage extends Component
             'indexed' => false,
             'locked' => false,
             'hidden' => false,
-            'min_length' => 0,
-            'max_length' => 5000,
+            'options' => null,
             'rules' => null,
         ];
 
         $this->collectionForm['fields'][] = $newField;
-        
+
         $this->dispatch('fields-updated');
     }
 
     public function updateFieldOrder(array $orderedIds): void
     {
         $reorderedFields = [];
-        
+
         foreach ($orderedIds as $order => $id) {
             foreach ($this->collectionForm['fields'] as $field) {
                 if (($field['id'] ?? null) == $id || ($field['name'] ?? null) == $id) {
                     $field['order'] = $order;
                     $reorderedFields[] = $field;
-                    
+
                     // Update order in database for existing fields
                     if (isset($field['id'])) {
                         CollectionField::where('id', $field['id'])->update(['order' => $order]);
@@ -698,7 +674,7 @@ class CollectionPage extends Component
                 }
             }
         }
-        
+
         // Add any fields that weren't in the ordered list (new fields without IDs)
         foreach ($this->collectionForm['fields'] as $field) {
             $fieldId = $field['id'] ?? $field['name'] ?? null;
@@ -707,9 +683,9 @@ class CollectionPage extends Component
                 $reorderedFields[] = $field;
             }
         }
-        
+
         $this->collectionForm['fields'] = $reorderedFields;
-        
+
         // Don't re-render after reordering to prevent SortableJS conflicts
         $this->skipRender();
     }

@@ -1,0 +1,43 @@
+<?php
+
+namespace App\FieldOptions;
+
+use App\Contracts\CollectionFieldOption;
+
+class NumberFieldOption implements CollectionFieldOption
+{
+    public function __construct(
+        public ?float $min = null,
+        public ?float $max = null,
+        public bool $allowDecimals = false,
+    ) {}
+
+    public function toArray(): array
+    {
+        return [
+            'min' => $this->min,
+            'max' => $this->max,
+            'allowDecimals' => $this->allowDecimals,
+        ];
+    }
+
+    public static function fromArray(array $data): static
+    {
+        return new static(
+            min: $data['min'] ?? null,
+            max: $data['max'] ?? null,
+            allowDecimals: $data['allowDecimals'] ?? false,
+        );
+    }
+
+    public function validate(): bool
+    {
+        if ($this->min !== null && $this->max !== null) {
+            if ($this->min > $this->max) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
