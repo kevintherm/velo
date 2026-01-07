@@ -130,8 +130,17 @@ class RecordQueryCompiler
         // Manual JSON extraction for using mysql, enclosed to avoid bypassing collection_id where clause
         $query->where(function ($q) {
             foreach ($this->filters as $f) {
-                $rawSql = "JSON_UNQUOTE(JSON_EXTRACT(data, '$.\"{$f['field']}\"')) {$f['operator']} ?";
+                $virtualCol = \App\Helper::generateVirtualColumnName($this->collection, $f['field']);
+                $isIndexed = $this->isFieldIndexed($f['field']);
 
+                if ($isIndexed) {
+                    $method = (isset($f['logical']) && strtoupper($f['logical']) === 'OR') ? 'orWhere' : 'where';
+                    $q->$method($virtualCol, $f['operator'], $f['value']);
+                    continue;
+                }
+
+                // Slow json extraction as fallback
+                $rawSql = "JSON_UNQUOTE(JSON_EXTRACT(data, '$.\"{$f['field']}\"')) {$f['operator']} ?";
                 if (isset($f['logical']) && strtoupper($f['logical']) === 'OR') {
                     $q->orWhereRaw($rawSql, [$f['value']]);
                 } else {
@@ -141,6 +150,13 @@ class RecordQueryCompiler
         });
 
         foreach ($this->sorts as $s) {
+            $virtualCol = \App\Helper::generateVirtualColumnName($this->collection, $s['field']);
+            if ($this->isFieldIndexed($s['field'])) {
+                $query->orderBy($virtualCol, $s['direction']);
+                continue;
+            }
+
+            // Fallback using json extract
             $query->orderByRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.\"{$s['field']}\"')) {$s['direction']}");
         }
 
@@ -210,5 +226,14 @@ class RecordQueryCompiler
                 'path' => LengthAwarePaginator::resolveCurrentPath(),
             ]
         );
+    }
+
+    protected function isFieldIndexed(string $fieldName): bool
+    {
+        // Fast check for now, might check for the actual vcol later
+        return DB::table('collection_indexes')
+            ->where('collection_id', $this->collection->id)
+            ->whereJsonContains('field_names', $fieldName)
+            ->exists();
     }
 }

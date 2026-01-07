@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Exceptions\IndexOperationException;
+use App\Helper;
 use DB;
 use Mary\Traits\Toast;
 use Livewire\Component;
@@ -27,6 +29,7 @@ class CollectionPage extends Component
     public bool $showRecordDrawer = false;
     public bool $showConfirmDeleteDialog = false;
     public bool $showConfigureCollectionDrawer = false;
+    public bool $showFieldIndexModal = false;
 
     // Record Form State
     public array $form = [];
@@ -35,6 +38,11 @@ class CollectionPage extends Component
     public $collectionForm = ['fields' => []];
     public string $tabSelected = 'fields-tab';
     public string $fieldOpen = '';
+
+    // Field Index Form State
+    public array $fieldsToBeIndexed = [];
+    public LaravelCollection $collectionIndexes;
+    public bool $isUniqueIndex = false;
 
     // File Library State
     #[Rule(['files.*.*' => 'file'])]
@@ -111,6 +119,7 @@ class CollectionPage extends Component
         $this->fillFieldsVisibility();
         $this->fillRecordForm();
         $this->fillCollectionForm();
+        $this->fillCollectionIndexes();
         $this->breadcrumbs = [
             ['link' => route('home'), 'icon' => 's-home'],
             ['label' => ucfirst(request()->segment(2))],
@@ -200,6 +209,7 @@ class CollectionPage extends Component
 
     public function fillRecordForm($data = null)
     {
+        $this->resetValidation();
         if ($data == null) {
             foreach ($this->fields as $field) {
                 if ($field->type === FieldType::Bool) {
@@ -333,7 +343,7 @@ class CollectionPage extends Component
         $status = $recordId ? 'Updated' : 'Created';
         $record = null;
 
-        $rulesCompiler = new RecordRulesCompiler($this->collection, new MysqlIndexStrategy, ignoreId: $recordId);
+        $rulesCompiler = new RecordRulesCompiler($this->collection, new MysqlIndexStrategy, ignoreId: $recordId, formObject: $this->form);
 
         $rules = $rulesCompiler->getRules(prefix: 'form.');
         $messages = [];
@@ -355,12 +365,16 @@ class CollectionPage extends Component
             $attributes[$ruleName] = Str::lower(Str::headline($newName));
         }
 
+        \DB::enableQueryLog();
+
         try {
             $this->validate($rules, $messages, $attributes);
-        } catch (\Exception $e) {
-            // dd($e,  data_get($this, 'form.avatar'));
-            throw $e;
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::info(\DB::getQueryLog()); // This will now catch the SQL generated during the failure
+            throw $e; // Re-throw so the frontend still gets the error messages
         }
+
+        $this->validate($rules, $messages, $attributes);
 
         if ($record) {
 
@@ -481,6 +495,7 @@ class CollectionPage extends Component
 
     public function fillCollectionForm()
     {
+        $this->resetValidation();
         $this->collectionForm = $this->collection->toArray();
         $this->collectionForm['fields'] = $this->fieldsToArray();
 
@@ -872,6 +887,118 @@ class CollectionPage extends Component
 
     /* === END COLLECTION CONFIGURATION === */
 
+    /* === START INDEX OPERATION === */
+
+    public function updatedShowFieldIndexModal()
+    {
+        $this->resetValidation('fieldsToBeIndexed');
+    }
+
+    public function fillCollectionIndexes()
+    {
+        $this->collectionIndexes = $this->collection->indexes()->get();
+    }
+
+    public function showIndex($indexId)
+    {
+        if (!$this->collectionIndexes->firstWhere('id', '=', $indexId)) {
+            $this->showToast('Index not found.');
+            return;
+        }
+
+        $index = $this->collectionIndexes->firstWhere('id', '=', $indexId);
+
+        $this->isUniqueIndex = str_starts_with('uq_', $index->name);
+        $this->fieldsToBeIndexed = $index->field_names;
+        $this->showFieldIndexModal = true;
+    }
+
+    public function addNewIndex()
+    {
+        $this->isUniqueIndex = false;
+        $this->fieldsToBeIndexed = [];
+        $this->showFieldIndexModal = true;
+    }
+
+    public function indexToggleField($field)
+    {
+        if (!\in_array($field, $this->fieldsToBeIndexed)) {
+            $this->fieldsToBeIndexed[] = $field;
+        } else {
+            $this->fieldsToBeIndexed = array_filter($this->fieldsToBeIndexed, fn($a) => $a != $field);
+        }
+    }
+
+    public function dropIndex()
+    {
+        if (empty($this->fieldsToBeIndexed)) {
+            $this->showToast('Index not found.');
+            return;
+        }
+
+        $availableFields =  $this->fields->pluck('name');
+        foreach($this->fieldsToBeIndexed as $fieldName) {
+            if (!$availableFields->contains($fieldName)) {
+                $this->showToast("Invalid field: $fieldName.");
+                return;
+            }
+        }
+
+        $indexManager = new MysqlIndexStrategy();
+
+        $indexManager->dropIndex($this->collection, $this->fieldsToBeIndexed);
+
+        $this->showFieldIndexModal = false;
+        $this->isUniqueIndex = false;
+        $this->fieldsToBeIndexed = [];
+        $this->fields->fresh();
+        $this->fillCollectionIndexes();
+        $this->showSuccess("Index deleted.");
+    }
+
+    public function createIndex()
+    {
+        if (empty($this->fieldsToBeIndexed)) {
+            $this->showToast('An index must contain at least one field.');
+            return;
+        }
+
+        $availableFields =  $this->fields->pluck('name');
+        foreach($this->fieldsToBeIndexed as $fieldName) {
+            if (!$availableFields->contains($fieldName)) {
+                $this->showToast("Invalid field: $fieldName.");
+                return;
+            }
+        }
+
+        $indexManager = new MysqlIndexStrategy();
+
+        if ($indexManager->hasIndex($this->collection, $this->fieldsToBeIndexed, $this->isUniqueIndex)) {
+            $this->showToast('Index already exists.');
+            return;   
+        }
+
+        try {
+            $indexManager->createIndex($this->collection, $this->fieldsToBeIndexed, $this->isUniqueIndex);
+        } catch (IndexOperationException $e) {
+            if ($e->getCode() === 1062) {
+                $this->addError('fieldsToBeIndexed', $e->getMessage());
+                return;
+            }
+
+            $this->addError('fieldsToBeIndexed', $e->getMessage());
+            return;
+        }
+
+        $this->showFieldIndexModal = false;
+        $this->isUniqueIndex = false;
+        $this->fieldsToBeIndexed = [];
+        $this->fillCollectionIndexes();
+        $this->showSuccess("Created new index.");
+    }
+    
+    /* === END INDEX OPERATION === */
+
     #[On('toast')]
     public function showToast($message = 'Ok')
     {
@@ -897,14 +1024,15 @@ class CollectionPage extends Component
     }
 
     #[On('error')]
-    public function showError($message = 'Error')
+    public function showError($title = 'Error', $message = '')
     {
         $this->info(
-            title: $message,
+            title: $title,
+            description: $message,
             position: 'toast-bottom toast-end',
             icon: 'o-information-circle',
             css: 'alert-error',
-            timeout: 1500,
+            timeout: 4000,
         );
     }
 

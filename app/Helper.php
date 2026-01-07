@@ -68,7 +68,28 @@ class Helper
     public static function generateIndexName(Collection $collection, string $fieldName, bool $unique): string
     {
         $prefix = $unique ? 'uq' : 'idx';
-        return "{$prefix}_{$collection->id}_{$fieldName}";
+        $name = "{$prefix}_{$collection->id}_{$fieldName}";
+
+        if (\strlen($name) > 64) {
+            $hash = substr(md5($fieldName), 0, 8);
+            $name = "{$prefix}{$collection->id}_{$hash}";
+        }
+
+        return $name;
+    }
+
+    public static function decodeIndexName(string $indexName): array
+    {
+        $parts = explode('_', $indexName);
+        
+        $prefix       = array_shift($parts); // 'idx' or 'uq'
+        $collectionId = array_shift($parts); // '1'
+
+        return [
+            'is_unique'     => $prefix === 'uq',
+            'collection_id' => $collectionId,
+            'field_names'   => $parts, // Returns ['id', 'email']
+        ];
     }
 
     public static function generateVirtualColumnName(Collection $collection, string $fieldName): string

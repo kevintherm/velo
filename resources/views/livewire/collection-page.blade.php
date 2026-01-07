@@ -477,6 +477,18 @@
 
                     <x-button label="New Field" icon="o-plus" class="w-full btn-outline btn-primary"
                         wire:click="addNewField" spinner />
+
+                    <div class="divider my-2"></div>
+
+                    <p class="text-base-content text-sm mb-1">Unique constraints and indexes ({{ count($collectionIndexes) }})</p>
+                    <div class="flex items-center flex-wrap gap-2">
+                        @foreach ($collectionIndexes as $index)
+                            <x-button label="{{ (str_starts_with($index->index_name, 'uq_') ? 'Unique: ' : '') . implode(', ', $index->field_names) }}" class="btn-soft btn-sm" wire:click="showIndex({{ $index->id }})" spinner="showIndex({{ $index->id }})" />
+                        @endforeach
+                        <x-button label="New Index" icon="o-plus" class="btn-sm btn-soft"
+                        wire:click="addNewIndex" spinner="addNewIndex" />
+                    </div>
+
                 </x-tab>
                 <x-tab name="api-rules-tab" label="API Rules">
                     <div>Api Rules</div>
@@ -494,6 +506,44 @@
         </x-form>
 
     </x-drawer>
+
+    <x-modal wire:model="showFieldIndexModal" title="Update Index">
+        <div class="space-y-2">
+            <div class="bg-info/10 border border-info/20 rounded-lg p-4">
+                <div class="flex gap-2">
+                    <x-icon name="o-information-circle" class="w-5 h-5 text-info shrink-0" />
+                    <div class="text-sm">
+                        <p class="font-semibold text-info mb-1">About Indexes</p>
+                        <p class="opacity-80">Indexes improve query performance for frequently searched fields. Unique indexes also enforce data uniqueness.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="my-4"></div>
+
+            <x-tags label="Selected Fields"  wire:model="fieldsToBeIndexed" disabled />
+            <x-toggle label="Unique" wire:model="isUniqueIndex" />
+
+            <div class="divider my-2"></div>
+
+            <div class="flex items-center flex-wrap gap-2">
+                @foreach ($fields as $field)
+                    <x-button label="{{ $field->name }}" @class(['btn-sm', in_array($field->name, $fieldsToBeIndexed) ? 'btn-accent' : 'btn-soft']) wire:click="indexToggleField('{{ $field->name }}')" />
+                @endforeach
+            </div>
+
+        </div>
+
+        <x-slot:actions>
+            <div class="w-full flex items-center justify-between flex-wrap gap-2">
+                <x-button icon="o-trash" tooltip-right="Drop Index" class="btn-ghost btn-circle scale-90 {{ empty($fieldsToBeIndexed) ? 'opacity-0' : '' }}" wire:click="dropIndex" spinner="dropIndex" />
+                <div class="flex items-center flex-wrap gap-2">
+                    <x-button label="Cancel" x-on:click="$wire.showFieldIndexModal = false" />
+                    <x-button class="btn-primary" label="Set Index" wire:click="createIndex" spinner="createIndex" :disabled="empty($fieldsToBeIndexed)" />
+                </div>
+            </div>
+        </x-slot:actions>
+    </x-modal>
 
     <x-modal wire:model="showConfirmDeleteDialog" title="Confirm Delete">
         Are you sure you want to delete {{ count($recordToDelete) > 1 ? count($recordToDelete) : 'this' }}

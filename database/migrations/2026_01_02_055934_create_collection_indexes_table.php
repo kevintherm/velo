@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('collection_indexes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('collection_id')->constrained()->cascadeOnDelete();
-            $table->string('field_name');
+            $table->json('field_names');
             $table->string('index_name')->nullable();
-            $table->timestamps();
+            $table->timestamp('created_at');
         });
     }
 

@@ -14,6 +14,7 @@ use App\Models\Collection;
 use App\Models\CollectionField;
 use App\Rules\AllowedEmailDomains;
 use App\Rules\BlockedEmailDomains;
+use DB;
 use Illuminate\Validation\Rule;
 
 class RecordRulesCompiler
@@ -22,6 +23,7 @@ class RecordRulesCompiler
         protected Collection $collection,
         private IndexStrategy $indexManager,
         private ?string $ignoreId = null,
+        private ?array $formObject = null
     ) {}
 
     /**
@@ -73,23 +75,51 @@ class RecordRulesCompiler
         }
 
         if ($field->unique) {
-            $virtualCol = Helper::generateVirtualColumnName($collection, $field->name);
-            $indexName = Helper::generateIndexName($collection, $field->name, true);
+            // $virtualCol = Helper::generateVirtualColumnName($collection, $field->name);
+            // $indexName = Helper::generateIndexName($collection, $field->name, true);
 
-            if ($this->indexManager->hasIndex($indexName)) {
-                $fieldRules[] = Rule::unique('records', $virtualCol)
-                    ->where('collection_id', $collection->id)
-                    ->ignore($this->ignoreId);
-            } else {
-                // Slow fallback for non-indexed fields
-                \Log::alert('Unique index not found. Reverting to fallback.', [
-                    'collection' => $collection->name,
-                    'field' => $field->name
-                ]);
+            // if ($this->indexManager->hasIndex($indexName)) {
+            //     $fieldRules[] = Rule::unique('records', $virtualCol)
+            //         ->where('collection_id', $collection->id)
+            //         ->ignore($this->ignoreId);
+            // } else {
+            //     // Slow fallback for non-indexed fields
+            //     \Log::alert('Unique index not found. Reverting to fallback.', [
+            //         'collection' => $collection->name,
+            //         'field' => $field->name
+            //     ]);
 
-                $fieldRules[] = Rule::unique('records', "data->>{$field->name}")
-                    ->where('collection_id', $collection->id)
-                    ->ignore($this->ignoreId);
+            //     $fieldRules[] = Rule::unique('records', "data->>{$field->name}")
+            //         ->where('collection_id', $collection->id)
+            //         ->ignore($this->ignoreId);
+            // }
+
+            DB::enableQueryLog();
+            $indexes = DB::table('collection_indexes')
+                ->where('collection_id', $collection->id)
+                ->whereJsonContains('field_names', $field->name)
+                ->where('index_name', 'like', 'uq_%')
+                ->get();
+
+            foreach ($indexes as $index) {
+                $fields = json_decode($index->field_names);
+            
+                $virtualCol = Helper::generateVirtualColumnName($collection, $field->name);
+
+                $rule = Rule::unique('records', $virtualCol)
+                    ->where('collection_id', $collection->id);
+
+                foreach ($fields as $otherField) {
+                    if ($otherField === $field->name) continue;
+                    $otherVirtualCol = Helper::generateVirtualColumnName($collection, $otherField);
+                    $rule->where($otherVirtualCol, $this->formObject[$otherField]);
+                }
+
+                if ($this->ignoreId != null) {
+                    $rule->ignore($this->ignoreId, 'data->>id');
+                }
+
+                $fieldRules[] = $rule;
             }
         }
 

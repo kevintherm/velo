@@ -2,6 +2,8 @@ BUG:
 - duplicating a row with files in it will not copy the files from original row, hence pointing to the same file
 
 IMPROVEMENT:
+- protect index upon fields configuration
+- protect index, and unique property for collection field, unique and index is determined on the index manager
 - fix file type validation
 - refactor file handling
 - add auto generate thumbnail feature for created lifecycle
