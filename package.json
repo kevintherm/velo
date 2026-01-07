@@ -8,13 +8,14 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.18",
+    "@types/bun": "latest",
+    "@wotz/livewire-sortablejs": "^1.0.0",
     "axios": "^1.11.0",
     "concurrently": "^9.0.1",
     "daisyui": "^5.5.14",
     "laravel-vite-plugin": "^2.0.0",
     "tailwindcss": "^4.1.18",
-    "vite": "^7.0.7",
-    "@types/bun": "latest"
+    "vite": "^7.0.7"
   },
   "name": "larabase",
   "peerDependencies": {

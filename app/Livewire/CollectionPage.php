@@ -194,6 +194,11 @@ class CollectionPage extends Component
         return $compiler->paginate($this->perPage);
     }
 
+    /* === RECORD OPERATION === */
+
+    // @TODO: rename all record methods to {operation}Record
+    // @TODO: Remove validateFields method, move it to saveRecord, and update the usage of RecordRulesCompiler
+
     protected function validateFields(): array
     {
         $rulesCompiler = new RecordRulesCompiler($this->collection);
@@ -429,6 +434,9 @@ class CollectionPage extends Component
         );
     }
 
+    /* === RECORD OPERATION === */
+    
+
     /* === COLLECTION CONFIGURATION === */
 
     public function updatedCollectionForm($value, $key)
@@ -468,8 +476,9 @@ class CollectionPage extends Component
         }
     }
 
-    public function updateFieldOrder(array $orderedIds)
+    public function updateFieldOrder($ids)
     {
+        $orderedIds = array_column($ids, 'value');
         foreach ($orderedIds as $newOrder => $fieldId) {
             foreach ($this->collectionForm['fields'] as &$formField) {
                 if ($formField['id'] == $fieldId) {
@@ -485,11 +494,9 @@ class CollectionPage extends Component
         
         $this->collectionForm['fields'] = array_values($this->collectionForm['fields']);
 
-        foreach ($this->collectionForm['fields'] as &$field) {
-            $this->ensureFieldOptionsDefaults($field);
+        foreach($this->collectionForm['fields'] as $index => $_) {
+            $this->updatedCollectionForm(null, "fields.$index.order");
         }
-
-        $this->dispatch('fields-updated');
     }
 
     public function addNewField()
@@ -553,11 +560,24 @@ class CollectionPage extends Component
     public function deleteField($targetId)
     {
         $key = array_find_key($this->collectionForm['fields'], fn($f) => $f['id'] === $targetId);
+        $lockedStatus = $this->fields->where('id', $targetId)->first()?->locked;
 
         if (!$key) {
             $this->error(
                 title: 'Cannot delete field.',
                 description: "Field not found.",
+                position: 'toast-bottom toast-end',
+                icon: 'o-information-circle',
+                css: 'alert-error',
+                timeout: 2000,
+            );
+            return;
+        }
+
+        if (!$lockedStatus) {
+            $this->error(
+                title: 'Cannot delete field.',
+                description: "Field is locked.",
                 position: 'toast-bottom toast-end',
                 icon: 'o-information-circle',
                 css: 'alert-error',
@@ -614,6 +634,18 @@ class CollectionPage extends Component
         }
 
         $this->collectionForm['fields'][$fieldIdx]['options']['allowedMimeTypes'] = $this->mimeTypePresets[$presetsName];
+    }
+
+    private function ensureFieldOptionsDefaults(array &$field): void
+    {
+        // Ensure field options have required default empty arrays for UI components
+        $requiredDefaults = ['allowedDomains', 'blockedDomains', 'allowedMimeTypes'];
+        
+        foreach ($requiredDefaults as $key) {
+            if (!isset($field['options'][$key])) {
+                $field['options'][$key] = [];
+            }
+        }
     }
 
     public function saveCollection()
@@ -830,20 +862,6 @@ class CollectionPage extends Component
     }
 
     /* === COLLECTION CONFIGURATION === */
-
-    /**
-     * Ensure field options have required default empty arrays for UI components
-     */
-    private function ensureFieldOptionsDefaults(array &$field): void
-    {
-        $requiredDefaults = ['allowedDomains', 'blockedDomains', 'allowedMimeTypes'];
-        
-        foreach ($requiredDefaults as $key) {
-            if (!isset($field['options'][$key])) {
-                $field['options'][$key] = [];
-            }
-        }
-    }
 
     #[On('toast')]
     public function showToast($message = 'Ok')
