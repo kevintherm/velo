@@ -30,6 +30,41 @@ class CollectionField extends Model
         return Helper::getFieldTypeIcon($this->name, $this->type);
     }
 
+    public static function createBaseFrom($fields): array
+    {
+        $fields = [
+            [
+                'name' => 'id',
+                'type' => FieldType::Text,
+                'unique' => true,
+                'required' => true,
+                'locked' => true,
+                'options' => [],
+            ],
+            
+            ...$fields,
+
+            [
+                'name' => 'created',
+                'type' => FieldType::Datetime,
+                'unique' => false,
+                'required' => false,
+                'locked' => false,
+                'options' => [],
+            ],
+            [
+                'name' => 'updated',
+                'type' => FieldType::Datetime,
+                'unique' => false,
+                'required' => false,
+                'locked' => false,
+                'options' => [],
+            ],
+        ];
+
+        return $fields;
+    }
+
     public static function createAuthFrom($fields): array
     {
         $fields = [

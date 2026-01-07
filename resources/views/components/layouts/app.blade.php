@@ -37,6 +37,8 @@
         </x-slot:content>
     </x-main>
 
+    <livewire:create-collection />
+
     <x-toast />
 </body>
 

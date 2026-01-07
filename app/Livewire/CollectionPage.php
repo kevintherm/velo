@@ -26,20 +26,20 @@ class CollectionPage extends Component
     public Collection $collection;
     public $fields;
     public array $breadcrumbs = [];
-    public bool $showRecordDrawer = false;
     public bool $showConfirmDeleteDialog = false;
-    public bool $showConfigureCollectionDrawer = false;
-    public bool $showFieldIndexModal = false;
 
     // Record Form State
+    public bool $showRecordDrawer = false;
     public array $form = [];
 
     // Collection Form State
+    public bool $showConfigureCollectionDrawer = false;
     public $collectionForm = ['fields' => []];
     public string $tabSelected = 'fields-tab';
     public string $fieldOpen = '';
 
     // Field Index Form State
+    public bool $showFieldIndexModal = false;
     public array $fieldsToBeIndexed = [];
     public LaravelCollection $collectionIndexes;
     public bool $isUniqueIndex = false;
@@ -285,8 +285,13 @@ class CollectionPage extends Component
             return;
         }
 
+        $fileTypeFields = $this->fields
+            ->filter(fn($f) => $f->type === FieldType::File)
+            ->mapWithKeys(fn($f) => [$f->name => []])
+            ->toArray();
+        
         $data = collect($result->data);
-        $data = [...$data, 'id' => ''];
+        $data = [...$data, 'id' => '', ...$fileTypeFields];
         $this->fillRecordForm($data);
     }
 
@@ -771,8 +776,6 @@ class CollectionPage extends Component
                         'name' => $field['name'],
                         'type' => $field['type'],
                         'order' => $field['order'],
-                        'unique' => $field['unique'] ?? false,
-                        'indexed' => $field['indexed'] ?? false,
                         'required' => $field['required'] ?? false,
                         'locked' => false,
                         'options' => $field['options'] ?? [],
@@ -818,8 +821,6 @@ class CollectionPage extends Component
                     'name' => $field['name'],
                     'type' => $field['type'],
                     'order' => $field['order'],
-                    'unique' => $field['unique'] ?? false,
-                    'indexed' => $field['indexed'] ?? false,
                     'required' => $field['required'] ?? false,
                     'options' => $field['options'] ?? [],
                     'hidden' => $field['hidden'] ?? false,

@@ -37,20 +37,21 @@ function getIcon($type){
     <x-menu-separator />
 
     @foreach ($projects as $project)
-        <x-menu-sub :title="$project->name" icon="o-circle-stack" :open="$loop->first" activate-by-route>
-            @foreach ($project->collections as $c)
-                <x-menu-item :title="$c->name" :icon="getIcon($c->type)" route="collection" :route-params="['collection' => $c->name]" />
+        <x-menu-sub :title="$project->name" icon="o-circle-stack" :open="$loop->first" active-by-route>
+            @foreach ($project->collections()->oldest()->get() as $c)
+                <x-menu-item :title="$c->name" :icon="getIcon($c->type)" link="{{ route('collection', ['collection' => $c]) }}" />
             @endforeach
         </x-menu-sub>
     @endforeach
 
     <div class="mt-8"></div>
-    <x-menu-sub title="System" icon="o-cog-6-tooth" >
+    
+    <x-menu-sub title="System" icon="o-cog-6-tooth">
         <x-menu-item title="superusers" icon="o-archive-box" link="" />
     </x-menu-sub>
 
     <x-menu-separator />
 
-    <x-menu-item title="Create Collection" icon="o-plus" link="" />
+    <x-menu-item title="Create Collection" icon="o-plus" x-on:click="$dispatch('create-collection')" />
 
 </x-menu>

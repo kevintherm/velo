@@ -171,7 +171,7 @@
         <div class="flex justify-between">
             <div class="flex items-center gap-2">
                 <x-button icon="o-x-mark" class="btn-circle btn-ghost" x-on:click="$wire.showRecordDrawer = false" />
-                <p class="text-sm">{{ $form['id'] ? 'Update' : 'New' }} <span
+                <p class="text-sm">{{ isset($form['id']) && $form['id'] ? 'Update' : 'New' }} <span
                         class="font-bold">{{ $collection->name }}</span> record</p>
             </div>
             <x-dropdown right>
@@ -252,7 +252,7 @@
                     @break
 
                     @case(\App\Enums\FieldType::File)
-                        <x-file-library :wire:key="$field->name" :label="$field->name" wire:model="form.{{ $field->name }}"
+                        <x-file-library :wire:key="$field->name" :label="$field->name" wire:model="files.{{ $field->name }}"
                             wire:library="library.{{ $field->name }}" :preview="data_get($library, $field->name, collect([]))" hint="rule" accept="*"
                             wire:loading.attr="disabled" wire:target="fillRecordForm" :required="$field->required == true" />
                     @break
