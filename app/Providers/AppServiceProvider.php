@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use Gate;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerCustomScopeDirective();
+
+        Gate::define('viewPulse', function (User $user) {
+            return $user !== null;
+        });
     }
 
     public function registerCustomScopeDirective(): void
