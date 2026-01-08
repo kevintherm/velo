@@ -29,7 +29,7 @@ class TextFieldOption implements CollectionFieldOption
             minLength: $data['minLength'] ?? null,
             maxLength: $data['maxLength'] ?? null,
             pattern: $data['pattern'] ?? null,
-            autoGeneratePattern: $data['autoGeneratePattern'] ?? null
+            autoGeneratePattern: $data['autoGeneratePattern'] ?? null,
         );
     }
 
@@ -41,10 +41,10 @@ class TextFieldOption implements CollectionFieldOption
     public function getValidationRules(): array
     {
         return [
-            'minLength' => ['nullable', 'integer', 'min:0', 'max:' . PHP_INT_MAX],
-            'maxLength' => ['nullable', 'integer', 'min:1', 'max:' . PHP_INT_MAX],
+            'minLength' => ['nullable', 'integer', 'min:0', 'max:'.PHP_INT_MAX],
+            'maxLength' => ['nullable', 'integer', 'min:1', 'max:'.PHP_INT_MAX],
             'pattern' => ['nullable', 'string'],
-            'autoGeneratePattern' => ['nullable', 'string']
+            'autoGeneratePattern' => ['nullable', 'string'],
         ];
     }
 

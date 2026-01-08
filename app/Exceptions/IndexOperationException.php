@@ -2,9 +2,4 @@
 
 namespace App\Exceptions;
 
-use Exception;
-
-class IndexOperationException extends Exception
-{
-    //
-}
+class IndexOperationException extends \Exception {}

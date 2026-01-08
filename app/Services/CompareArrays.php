@@ -14,179 +14,156 @@ namespace App\Services;
 
 class ComparedValue
 {
-	public const TYPE_ADDED = 'added';
-	public const TYPE_REMOVED = 'removed';
-	public const TYPE_MODIFIED = 'modified';
-	
-	public string $Type;
-	public mixed $OldValue;
-	public mixed $NewValue;
+    public const TYPE_ADDED = 'added';
 
-	/**
-	 * @param self::TYPE_* $Type
-	 */
-	function __construct( string $Type, mixed $OldValue, mixed $NewValue )
-	{
-		$this->Type = $Type;
-		$this->OldValue = $OldValue;
-		$this->NewValue = $NewValue;
-	}
+    public const TYPE_REMOVED = 'removed';
+
+    public const TYPE_MODIFIED = 'modified';
+
+    public string $Type;
+
+    public mixed $OldValue;
+
+    public mixed $NewValue;
+
+    /**
+     * @param  self::TYPE_*  $Type
+     */
+    public function __construct(string $Type, mixed $OldValue, mixed $NewValue)
+    {
+        $this->Type = $Type;
+        $this->OldValue = $OldValue;
+        $this->NewValue = $NewValue;
+    }
 }
 
 class CompareArrays
 {
-	/**
-	 * Flattens multi-dimensional array into one dimensional array,
-	 * and turns keys into paths separated by $Separator (by default '/').
-	 *
-	 * @param array<mixed> $Input
-	 *
-	 * @return array<int|string, mixed>
-	 */
-	public static function Flatten( array $Input, string $Separator = '/', ?string $Path = null ) : array
-	{
-		$Data = [];
+    /**
+     * Flattens multi-dimensional array into one dimensional array,
+     * and turns keys into paths separated by $Separator (by default '/').
+     *
+     * @param  array<mixed>  $Input
+     * @return array<int|string, mixed>
+     */
+    public static function Flatten(array $Input, string $Separator = '/', ?string $Path = null): array
+    {
+        $Data = [];
 
-		if( $Path !== null )
-		{
-			$Path .= $Separator;
-		}
-		else
-		{
-			$Path = '';
-		}
+        if ($Path !== null) {
+            $Path .= $Separator;
+        } else {
+            $Path = '';
+        }
 
-		foreach( $Input as $Key => $Value )
-		{
-			if( \is_array( $Value ) )
-			{
-				foreach( self::Flatten( $Value, $Separator, $Path . $Key ) as $NewKey => $NewValue )
-				{
-					$Data[ $NewKey ] = $NewValue;
-				}
-			}
-			else
-			{
-				$Data[ $Path . $Key ] = $Value;
-			}
-		}
+        foreach ($Input as $Key => $Value) {
+            if (\is_array($Value)) {
+                foreach (self::Flatten($Value, $Separator, $Path.$Key) as $NewKey => $NewValue) {
+                    $Data[$NewKey] = $NewValue;
+                }
+            } else {
+                $Data[$Path.$Key] = $Value;
+            }
+        }
 
-		return $Data;
-	}
+        return $Data;
+    }
 
-	/**
-	 * Compares two arrays and produces a new array of changes between these
-	 * two arrays. New array will be same level deep as the input arrays,
-	 * and the deepest value will be `ComparedValue`, which is an object
-	 * describing the difference (added, removed, modified).
-	 *
-	 * Optionally, use CompareArrays::Flatten() function to turn diff array
-	 * into a one dimensional array which will flatten keys into a single path.
-	 *
-	 * mixed[] return type because the array can be arbitrarily deep
-	 *
-	 * @param array<mixed> $Old
-	 * @param array<mixed> $New
-	 *
-	 * @return ComparedValue[]|mixed[]
-	 */
-	public static function Diff( array $Old, array $New ) : array
-	{
-		$Diff = [];
+    /**
+     * Compares two arrays and produces a new array of changes between these
+     * two arrays. New array will be same level deep as the input arrays,
+     * and the deepest value will be `ComparedValue`, which is an object
+     * describing the difference (added, removed, modified).
+     *
+     * Optionally, use CompareArrays::Flatten() function to turn diff array
+     * into a one dimensional array which will flatten keys into a single path.
+     *
+     * mixed[] return type because the array can be arbitrarily deep
+     *
+     * @param  array<mixed>  $Old
+     * @param  array<mixed>  $New
+     * @return ComparedValue[]|mixed[]
+     */
+    public static function Diff(array $Old, array $New): array
+    {
+        $Diff = [];
 
-		if( $Old === $New )
-		{
-			return $Diff;
-		}
+        if ($Old === $New) {
+            return $Diff;
+        }
 
-		foreach( $Old as $Key => $Value )
-		{
-			if( !\array_key_exists( $Key, $New ) )
-			{
-				$Diff[ $Key ] = self::Singular( ComparedValue::TYPE_REMOVED, $Value );
+        foreach ($Old as $Key => $Value) {
+            if (! \array_key_exists($Key, $New)) {
+                $Diff[$Key] = self::Singular(ComparedValue::TYPE_REMOVED, $Value);
 
-				continue;
-			}
+                continue;
+            }
 
-			$ValueNew = $New[ $Key ];
+            $ValueNew = $New[$Key];
 
-			// Force values to be proportional arrays
-			if( \is_array( $Value ) && !\is_array( $ValueNew ) )
-			{
-				$ValueNew = [ $ValueNew ];
-			}
+            // Force values to be proportional arrays
+            if (\is_array($Value) && ! \is_array($ValueNew)) {
+                $ValueNew = [$ValueNew];
+            }
 
-			if( \is_array( $ValueNew ) )
-			{
-				if( !\is_array( $Value ) )
-				{
-					$Value = [ $Value ];
-				}
+            if (\is_array($ValueNew)) {
+                if (! \is_array($Value)) {
+                    $Value = [$Value];
+                }
 
-				$Temp = self::Diff( $Value, $ValueNew );
+                $Temp = self::Diff($Value, $ValueNew);
 
-				if( !empty( $Temp ) )
-				{
-					$Diff[ $Key ] = $Temp;
-				}
+                if (! empty($Temp)) {
+                    $Diff[$Key] = $Temp;
+                }
 
-				continue;
-			}
+                continue;
+            }
 
-			if( \is_float( $Value ) && \is_float( $ValueNew )
-			&& !\is_infinite( $Value ) && !\is_infinite( $ValueNew )
-			&& !\is_nan( $Value ) && !\is_nan( $ValueNew ) )
-			{
-				$AreValuesDifferent = \abs( $Value - $ValueNew ) >= PHP_FLOAT_EPSILON;
-			}
-			else
-			{
-				$AreValuesDifferent = $Value !== $ValueNew;
-			}
+            if (\is_float($Value) && \is_float($ValueNew)
+            && ! \is_infinite($Value) && ! \is_infinite($ValueNew)
+            && ! \is_nan($Value) && ! \is_nan($ValueNew)) {
+                $AreValuesDifferent = \abs($Value - $ValueNew) >= PHP_FLOAT_EPSILON;
+            } else {
+                $AreValuesDifferent = $Value !== $ValueNew;
+            }
 
-			if( $AreValuesDifferent )
-			{
-				$Diff[ $Key ] = new ComparedValue( ComparedValue::TYPE_MODIFIED, $Value, $ValueNew );
-			}
-		}
+            if ($AreValuesDifferent) {
+                $Diff[$Key] = new ComparedValue(ComparedValue::TYPE_MODIFIED, $Value, $ValueNew);
+            }
+        }
 
-		foreach( $New as $Key => $Value )
-		{
-			if( !\array_key_exists( $Key, $Old ) )
-			{
-				$Diff[ $Key ] = self::Singular( ComparedValue::TYPE_ADDED, $Value );
-			}
-		}
+        foreach ($New as $Key => $Value) {
+            if (! \array_key_exists($Key, $Old)) {
+                $Diff[$Key] = self::Singular(ComparedValue::TYPE_ADDED, $Value);
+            }
+        }
 
-		return $Diff;
-	}
+        return $Diff;
+    }
 
-	/**
-	 * mixed[] return type because the array can be arbitrarily deep
-	 *
-	 * @param ComparedValue::TYPE_* $Type
-	 *
-	 * @return ComparedValue|mixed[]
-	 */
-	private static function Singular( string $Type, mixed $Value ) : ComparedValue|array
-	{
-		if( \is_array( $Value ) )
-		{
-			$Diff = [];
+    /**
+     * mixed[] return type because the array can be arbitrarily deep.
+     *
+     * @param  ComparedValue::TYPE_*  $Type
+     * @return ComparedValue|mixed[]
+     */
+    private static function Singular(string $Type, mixed $Value): ComparedValue|array
+    {
+        if (\is_array($Value)) {
+            $Diff = [];
 
-			foreach( $Value as $Key => $Value2 )
-			{
-				$Diff[ $Key ] = self::Singular( $Type, $Value2 );
-			}
+            foreach ($Value as $Key => $Value2) {
+                $Diff[$Key] = self::Singular($Type, $Value2);
+            }
 
-			return $Diff;
-		}
+            return $Diff;
+        }
 
-		if( $Type === ComparedValue::TYPE_REMOVED )
-		{
-			return new ComparedValue( $Type, $Value, null );
-		}
+        if ($Type === ComparedValue::TYPE_REMOVED) {
+            return new ComparedValue($Type, $Value, null);
+        }
 
-		return new ComparedValue( $Type, null, $Value );
-	}
+        return new ComparedValue($Type, null, $Value);
+    }
 }

@@ -1,13 +1,12 @@
 <?php
-# Source: MaryUI Image Library
+
+// Source: MaryUI Image Library
 
 namespace App\View\Components;
 
-use Closure;
 use Illuminate\Contracts\View\View;
-use Illuminate\View\Component;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
+use Illuminate\View\Component;
 
 class FileLibrary extends Component
 {
@@ -22,13 +21,12 @@ class FileLibrary extends Component
         public ?string $hint = null,
         public ?bool $hideErrors = false,
         public ?bool $hideProgress = false,
-        public ?string $changeText = "Change",
-        public ?string $removeText = "Remove",
-        public ?string $addFilesText = "Add file",
-        public Collection $preview = new Collection(),
-
+        public ?string $changeText = 'Change',
+        public ?string $removeText = 'Remove',
+        public ?string $addFilesText = 'Add file',
+        public Collection $preview = new Collection,
     ) {
-        $this->uuid = "mary" . md5(serialize($this)) . $id;
+        $this->uuid = 'mary'.md5(serialize($this)).$id;
     }
 
     public function modelName(): ?string
@@ -44,6 +42,7 @@ class FileLibrary extends Component
     public function validationMessage(string $message): string
     {
         return $message;
+
         // Remove common prefixes to make error messages cleaner
         return str($message)
             ->after('field')
@@ -52,7 +51,7 @@ class FileLibrary extends Component
             ->toString();
     }
 
-    public function render(): View|Closure|string
+    public function render(): View|\Closure|string
     {
         return <<<'BLADE'
              <div

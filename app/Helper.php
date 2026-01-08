@@ -8,23 +8,19 @@ use App\Models\Collection;
 use App\Models\CollectionField;
 use App\Models\Project;
 use App\Models\User;
-use DB;
 use Illuminate\Support\Str;
 
 class Helper
 {
     /**
-     * Create first project, and a super user account
-     * @param string $superuserEmail
-     * @param string $superuserPassword
-     * @return User
+     * Create first project, and a super user account.
      */
     public static function initProject(string $superuserEmail = 'admin@larabase.com', string $superuserPassword = 'password'): User
     {
-        DB::beginTransaction();
+        \DB::beginTransaction();
 
         $project = Project::create([
-            'name' => 'Acme'
+            'name' => 'Acme',
         ]);
 
         $userCollection = Collection::create([
@@ -55,12 +51,12 @@ class Helper
         }
 
         $user = User::create([
-            'name' => 'superuser_' . Str::random(8),
+            'name' => 'superuser_'.Str::random(8),
             'email' => $superuserEmail,
             'password' => $superuserPassword,
         ]);
 
-        DB::commit();
+        \DB::commit();
 
         return $user;
     }
@@ -81,14 +77,14 @@ class Helper
     public static function decodeIndexName(string $indexName): array
     {
         $parts = explode('_', $indexName);
-        
-        $prefix       = array_shift($parts); // 'idx' or 'uq'
+
+        $prefix = array_shift($parts); // 'idx' or 'uq'
         $collectionId = array_shift($parts); // '1'
 
         return [
-            'is_unique'     => $prefix === 'uq',
+            'is_unique' => $prefix === 'uq',
             'collection_id' => $collectionId,
-            'field_names'   => $parts, // Returns ['id', 'email']
+            'field_names' => $parts, // Returns ['id', 'email']
         ];
     }
 
@@ -97,9 +93,15 @@ class Helper
         return "col_{$collection->id}_{$fieldName}";
     }
 
-    public static function getFieldTypeIcon($name, $type) {
-        if ($name === 'id') return 'lucide.key';
-        if ($name === 'password') return 'lucide.lock';
+    public static function getFieldTypeIcon($name, $type)
+    {
+        if ($name === 'id') {
+            return 'lucide.key';
+        }
+        if ($name === 'password') {
+            return 'lucide.lock';
+        }
+
         return match ($type) {
             FieldType::Number => 'lucide.hash',
             FieldType::Email => 'lucide.mail',

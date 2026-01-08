@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Casts\FieldOptionCast;
 use App\Enums\FieldType;
 use App\Helper;
-use App\Models\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -26,7 +25,8 @@ class CollectionField extends Model
         return $this->belongsTo(Collection::class);
     }
 
-    public function getIcon() {
+    public function getIcon()
+    {
         return Helper::getFieldTypeIcon($this->name, $this->type);
     }
 
@@ -41,7 +41,7 @@ class CollectionField extends Model
                 'locked' => true,
                 'options' => [],
             ],
-            
+
             ...$fields,
 
             [

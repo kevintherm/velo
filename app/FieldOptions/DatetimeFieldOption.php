@@ -30,13 +30,13 @@ class DatetimeFieldOption implements CollectionFieldOption
     public function validate(): bool
     {
         // Validate date strings if provided
-        if ($this->minDate !== null && !\in_array($this->minDate, ['now', 'today'])) {
+        if ($this->minDate !== null && ! \in_array($this->minDate, ['now', 'today'])) {
             if (strtotime($this->minDate) === false) {
                 return false;
             }
         }
 
-        if ($this->maxDate !== null && !\in_array($this->maxDate, ['now', 'today'])) {
+        if ($this->maxDate !== null && ! \in_array($this->maxDate, ['now', 'today'])) {
             if (strtotime($this->maxDate) === false) {
                 return false;
             }

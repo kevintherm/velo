@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Str;
-use App\Enums\CollectionType;
-use Illuminate\Database\Eloquent\Model;
+use App\Collections\Handlers\CollectionTypeHandlerResolver;
 use App\Exceptions\InvalidRecordException;
 use Illuminate\Database\Eloquent\Casts\AsCollection;
-use App\Collections\Handlers\CollectionTypeHandlerResolver;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Record extends Model
 {
@@ -16,7 +15,7 @@ class Record extends Model
     protected function casts(): array
     {
         return [
-            'data' => AsCollection::class
+            'data' => AsCollection::class,
         ];
     }
 
@@ -28,7 +27,7 @@ class Record extends Model
     protected static function booted(): void
     {
         static::saving(function (Record $record) {
-            if (!$record->relationLoaded('collection')) {
+            if (! $record->relationLoaded('collection')) {
                 $record->load('collection.fields');
             }
 
@@ -36,7 +35,7 @@ class Record extends Model
             $fieldNames = $fields->keys()->sort()->values()->toArray();
             $data = $record->data;
 
-            if (!$data->has('id') || empty($data->get('id'))) {
+            if (! $data->has('id') || empty($data->get('id'))) {
                 $min = $fields['id']->options->minLength ?? 16;
                 $max = $fields['id']->options->maxLength ?? 16;
                 $length = random_int($min, $max);
@@ -60,7 +59,7 @@ class Record extends Model
                     : $originalData;
 
                 foreach ($fieldNames as $fieldName) {
-                    if (!$data->has($fieldName) && isset($originalData[$fieldName])) {
+                    if (! $data->has($fieldName) && isset($originalData[$fieldName])) {
                         $data->put($fieldName, $originalData[$fieldName]);
                     }
                 }
@@ -75,13 +74,8 @@ class Record extends Model
             $dataKeys = $data->keys()->sort()->values()->toArray();
             $missingFields = array_diff($fieldNames, $dataKeys);
 
-            if (!empty($missingFields)) {
-                throw new InvalidRecordException(
-                    "Record structure mismatch. Missing required fields: " .
-                    implode(', ', $missingFields) .
-                    ". Expected all fields: " .
-                    implode(', ', $fieldNames)
-                );
+            if (! empty($missingFields)) {
+                throw new InvalidRecordException('Record structure mismatch. Missing required fields: '.implode(', ', $missingFields).'. Expected all fields: '.implode(', ', $fieldNames));
             }
         });
     }

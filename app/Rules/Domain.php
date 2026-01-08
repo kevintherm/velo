@@ -2,7 +2,6 @@
 
 namespace App\Rules;
 
-use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 class Domain implements ValidationRule
@@ -12,10 +11,10 @@ class Domain implements ValidationRule
      *
      * @param  \Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
-    public function validate(string $attribute, mixed $value, Closure $fail): void
+    public function validate(string $attribute, mixed $value, \Closure $fail): void
     {
         // FILTER_VALIDATE_DOMAIN ensures correct hostname format
-        if (!filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) || !str_contains($value, '.')) {
+        if (! filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) || ! str_contains($value, '.')) {
             $fail('The :attribute must be a valid domain (e.g., example.com).');
         }
 

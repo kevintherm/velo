@@ -15,7 +15,7 @@ class BoolFieldOption implements CollectionFieldOption
 
     public static function fromArray(array $data): static
     {
-        return new static();
+        return new static;
     }
 
     public function validate(): bool

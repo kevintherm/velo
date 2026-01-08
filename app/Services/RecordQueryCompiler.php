@@ -2,19 +2,23 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Collection as DataCollection;
 use App\Models\Collection;
 use App\Models\Record;
+use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection as DataCollection;
+use Illuminate\Support\Facades\DB;
 
 class RecordQueryCompiler
 {
     protected Collection $collection;
+
     protected $filters = [];
+
     protected $sorts = [];
+
     protected int $perPage = 15;
+
     protected ?int $page = null;
 
     public function __construct(Collection $collection)
@@ -23,17 +27,19 @@ class RecordQueryCompiler
     }
 
     // Append new rule to the filters value
-    public function filter(string $field, string $operator = '=', string $value)
+    public function filter(string $field, string $operator, string $value)
     {
         $this->filters[] = compact('field', 'value', 'operator');
+
         return $this;
     }
 
-    // Compiled the string and REPLACES filters with the new value 
+    // Compiled the string and REPLACES filters with the new value
     public function filterFromString(string $filterString)
     {
         if (empty(trim($filterString))) {
             $this->filters = [];
+
             return $this;
         }
 
@@ -65,6 +71,7 @@ class RecordQueryCompiler
         }
 
         $this->filters = $filters;
+
         return $this;
     }
 
@@ -77,8 +84,8 @@ class RecordQueryCompiler
         foreach ($operators as $op) {
             // Build regex pattern to find the operator
             $pattern = in_array($op, ['LIKE', 'like'])
-                ? '/\s+' . preg_quote($op, '/') . '\s+/i'
-                : '/' . preg_quote($op, '/') . '/';
+                ? '/\s+'.preg_quote($op, '/').'\s+/i'
+                : '/'.preg_quote($op, '/').'/';
 
             // Check if this operator exists in the segment
             if (preg_match($pattern, $segment, $matches, PREG_OFFSET_CAPTURE)) {
@@ -106,8 +113,8 @@ class RecordQueryCompiler
     protected function removeQuotes(string $value): string
     {
         if (
-            (str_starts_with($value, '"') && str_ends_with($value, '"')) ||
-            (str_starts_with($value, "'") && str_ends_with($value, "'"))
+            (str_starts_with($value, '"') && str_ends_with($value, '"'))
+            || (str_starts_with($value, "'") && str_ends_with($value, "'"))
         ) {
             return substr($value, 1, -1);
         }
@@ -118,6 +125,7 @@ class RecordQueryCompiler
     public function sort(string $field, string $direction = 'asc')
     {
         $this->sorts[] = compact('field', 'direction');
+
         return $this;
     }
 
@@ -136,6 +144,7 @@ class RecordQueryCompiler
                 if ($isIndexed) {
                     $method = (isset($f['logical']) && strtoupper($f['logical']) === 'OR') ? 'orWhere' : 'where';
                     $q->$method($virtualCol, $f['operator'], $f['value']);
+
                     continue;
                 }
 
@@ -153,6 +162,7 @@ class RecordQueryCompiler
             $virtualCol = \App\Helper::generateVirtualColumnName($this->collection, $s['field']);
             if ($this->isFieldIndexed($s['field'])) {
                 $query->orderBy($virtualCol, $s['direction']);
+
                 continue;
             }
 
@@ -174,21 +184,23 @@ class RecordQueryCompiler
         return $data;
     }
 
-    public function firstRaw($casts = false): Record|null
+    public function firstRaw($casts = false): ?Record
     {
         $result = $this->buildQuery(Record::query())->first();
         if ($casts && $result?->data) {
             $this->casts($result->data);
         }
+
         return $result;
     }
 
-    public function first(): Record|null
+    public function first(): ?Record
     {
         $result = $this->buildQuery(Record::query())->first();
         if ($result?->data) {
             $this->casts($result->data);
         }
+
         return $result;
     }
 
@@ -215,7 +227,7 @@ class RecordQueryCompiler
             ->offset(($currentPage - 1) * $this->perPage)
             ->limit($this->perPage)
             ->get()
-            ->map(fn($d) => json_decode($d->data));
+            ->map(fn ($d) => json_decode($d->data));
 
         return new LengthAwarePaginator(
             $results,
@@ -224,7 +236,7 @@ class RecordQueryCompiler
             $currentPage,
             [
                 'path' => LengthAwarePaginator::resolveCurrentPath(),
-            ]
+            ],
         );
     }
 

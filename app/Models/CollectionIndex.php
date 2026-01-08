@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use DB;
 use Illuminate\Database\Eloquent\Model;
 
 class CollectionIndex extends Model
@@ -12,7 +11,7 @@ class CollectionIndex extends Model
     protected function casts(): array
     {
         return [
-            'field_names' => 'array'
+            'field_names' => 'array',
         ];
     }
 }

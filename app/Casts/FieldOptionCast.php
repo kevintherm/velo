@@ -12,7 +12,6 @@ use App\FieldOptions\NumberFieldOption;
 use App\FieldOptions\TextFieldOption;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Model;
-use InvalidArgumentException;
 
 class FieldOptionCast implements CastsAttributes
 {
@@ -28,15 +27,15 @@ class FieldOptionCast implements CastsAttributes
         }
 
         $data = json_decode($value, true);
-        
-        if (!\is_array($data)) {
+
+        if (! \is_array($data)) {
             return null;
         }
 
         // Get the field type from the model
         $fieldType = $attributes['type'] ?? null;
 
-        if (!$fieldType) {
+        if (! $fieldType) {
             return null;
         }
 
@@ -48,7 +47,7 @@ class FieldOptionCast implements CastsAttributes
         // Map field type to option class
         $optionClass = $this->getOptionClass($fieldType);
 
-        if (!$optionClass) {
+        if (! $optionClass) {
             return null;
         }
 
@@ -74,8 +73,8 @@ class FieldOptionCast implements CastsAttributes
             // Get the field type to instantiate the correct class
             // Check model first (for existing records), then attributes (for new records), then original attributes
             $fieldType = $model->type ?? $attributes['type'] ?? $model->getOriginal('type') ?? null;
-            
-            if (!$fieldType) {
+
+            if (! $fieldType) {
                 // If we still don't have a type, just store the JSON without validation
                 return json_encode($value);
             }
@@ -87,17 +86,17 @@ class FieldOptionCast implements CastsAttributes
 
             $optionClass = $this->getOptionClass($fieldType);
 
-            if (!$optionClass) {
+            if (! $optionClass) {
                 // If no option class found, just store the JSON
                 return json_encode($value);
             }
 
             $instance = $optionClass::fromArray($value);
-            
+
             return json_encode($instance->toArray());
         }
 
-        throw new InvalidArgumentException('Options must be an array or CollectionFieldOption instance');
+        throw new \InvalidArgumentException('Options must be an array or CollectionFieldOption instance');
     }
 
     /**

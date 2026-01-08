@@ -14,7 +14,6 @@ use App\Models\Collection;
 use App\Models\CollectionField;
 use App\Rules\AllowedEmailDomains;
 use App\Rules\BlockedEmailDomains;
-use DB;
 use Illuminate\Validation\Rule;
 
 class RecordRulesCompiler
@@ -23,11 +22,12 @@ class RecordRulesCompiler
         protected Collection $collection,
         private IndexStrategy $indexManager,
         private ?string $ignoreId = null,
-        private ?array $formObject = null
+        private ?array $formObject = null,
     ) {}
 
     /**
-     * Returns a laravel style rules for each fields
+     * Returns a laravel style rules for each fields.
+     *
      * @return string[][]
      */
     public function getRules(string $prefix = ''): array
@@ -46,15 +46,15 @@ class RecordRulesCompiler
                 continue;
             }
 
-            $rules[$prefix . $field->name] = $fieldRules;
+            $rules[$prefix.$field->name] = $fieldRules;
         }
 
         return $rules;
     }
 
     /**
-     * Compile validation rules for a single field
-     * @param CollectionField $field
+     * Compile validation rules for a single field.
+     *
      * @return array<mixed|string|\Illuminate\Validation\Rules\In>
      */
     protected function compileFieldRules(CollectionField $field): array
@@ -94,8 +94,8 @@ class RecordRulesCompiler
             //         ->ignore($this->ignoreId);
             // }
 
-            DB::enableQueryLog();
-            $indexes = DB::table('collection_indexes')
+            \DB::enableQueryLog();
+            $indexes = \DB::table('collection_indexes')
                 ->where('collection_id', $collection->id)
                 ->whereJsonContains('field_names', $field->name)
                 ->where('index_name', 'like', 'uq_%')
@@ -103,14 +103,16 @@ class RecordRulesCompiler
 
             foreach ($indexes as $index) {
                 $fields = json_decode($index->field_names);
-            
+
                 $virtualCol = Helper::generateVirtualColumnName($collection, $field->name);
 
                 $rule = Rule::unique('records', $virtualCol)
                     ->where('collection_id', $collection->id);
 
                 foreach ($fields as $otherField) {
-                    if ($otherField === $field->name) continue;
+                    if ($otherField === $field->name) {
+                        continue;
+                    }
                     $otherVirtualCol = Helper::generateVirtualColumnName($collection, $otherField);
                     $rule->where($otherVirtualCol, $this->formObject[$otherField]);
                 }
@@ -135,8 +137,8 @@ class RecordRulesCompiler
     }
 
     /**
-     * Get basic type validation rules
-     * @param CollectionField $field
+     * Get basic type validation rules.
+     *
      * @return string[]
      */
     protected function getTypeRules(CollectionField $field): array
@@ -153,8 +155,8 @@ class RecordRulesCompiler
     }
 
     /**
-     * Get validation rules from field options
-     * @param CollectionField $field
+     * Get validation rules from field options.
+     *
      * @return array<string|\Illuminate\Validation\Rules\In>
      */
     protected function getOptionRules(CollectionField $field): array
@@ -176,11 +178,11 @@ class RecordRulesCompiler
                 break;
 
             case $options instanceof EmailFieldOption:
-                if ($options->allowedDomains !== null && !empty($options->allowedDomains)) {
-                    $rules[] = "email:rfc,dns,filter";
+                if ($options->allowedDomains !== null && ! empty($options->allowedDomains)) {
+                    $rules[] = 'email:rfc,dns,filter';
                     $rules[] = new AllowedEmailDomains($options->allowedDomains);
                 }
-                if ($options->blockedDomains !== null && !empty($options->blockedDomains)) {
+                if ($options->blockedDomains !== null && ! empty($options->blockedDomains)) {
                     $rules[] = new BlockedEmailDomains($options->blockedDomains);
                 }
                 break;
@@ -192,7 +194,7 @@ class RecordRulesCompiler
                 if ($options->max !== null) {
                     $rules[] = "max:{$options->max}";
                 }
-                if (!$options->allowDecimals) {
+                if (! $options->allowDecimals) {
                     $rules[] = 'integer';
                     $rules[] = 'integer,decimal:0,2';
                 }
@@ -208,7 +210,7 @@ class RecordRulesCompiler
                 break;
 
             case $options instanceof FileFieldOption:
-                if ($options->allowedMimeTypes !== null && !empty($options->allowedMimeTypes)) {
+                if ($options->allowedMimeTypes !== null && ! empty($options->allowedMimeTypes)) {
                     $mimes = implode(',', $options->allowedMimeTypes);
                     $rules[] = "mimetypes:{$mimes}";
                 }

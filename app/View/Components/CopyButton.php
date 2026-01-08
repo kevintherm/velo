@@ -2,18 +2,16 @@
 
 namespace App\View\Components;
 
-use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
 class CopyButton extends Component
 {
     public function __construct(
-        public string $text
-    ) {
-    }
+        public string $text,
+    ) {}
 
-    public function render(): View|Closure|string
+    public function render(): View|\Closure|string
     {
         return <<<'BLADE'
             <x-button class="btn-circle btn-ghost btn-xs" x-data="{text: '{{ $text }}', showSuccess: false, timeout: null, copy() {

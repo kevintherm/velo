@@ -15,8 +15,8 @@ class DynamicIndexManager
         $driver = DB::connection()->getDriverName();
 
         return match ($driver) {
-            'mysql' => new MysqlIndexStrategy(),
-            'pgsql' => new PostgresIndexStrategy(),
+            'mysql' => new MysqlIndexStrategy,
+            'pgsql' => new PostgresIndexStrategy,
             default => throw new \Exception("Unsupported database driver: {$driver}"),
         };
     }

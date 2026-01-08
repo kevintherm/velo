@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 class Project extends Model
@@ -11,7 +10,8 @@ class Project extends Model
 
     protected $fillable = ['name'];
 
-    public function collections() {
+    public function collections()
+    {
         return $this->hasMany(Collection::class);
     }
 }

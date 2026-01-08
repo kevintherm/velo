@@ -12,10 +12,10 @@ enum CollectionType: string
     {
         return array_map(
             fn ($case) => [
-                'id'   => $case->value,
+                'id' => $case->value,
                 'name' => $case->name,
             ],
-            self::cases()
+            self::cases(),
         );
     }
 }

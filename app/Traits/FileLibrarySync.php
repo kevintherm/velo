@@ -1,11 +1,11 @@
 <?php
-# Source: MaryUI WithMediaSync
+
+// Source: MaryUI WithMediaSync
 
 namespace App\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
-use Str;
 
 trait FileLibrarySync
 {
@@ -16,20 +16,20 @@ trait FileLibrarySync
         $libraryCollection = data_get($this, $library);
 
         if ($libraryCollection instanceof \Illuminate\Support\Collection) {
-            $libraryCollection = $libraryCollection->filter(fn($image) => $image['uuid'] != $uuid)->values();
+            $libraryCollection = $libraryCollection->filter(fn ($image) => $image['uuid'] != $uuid)->values();
             data_set($this, $library, $libraryCollection);
         }
 
         // Remove file from temporary storage if it exists
         $name = str($url)->after('preview-file/')->before('?expires')->toString();
-        
+
         // Also try to extract filename from permanent storage URLs
         if (empty($name) || $name === $url) {
             $name = basename(parse_url($url, PHP_URL_PATH));
         }
-        
+
         $files = data_get($this, $filesModelName);
-        
+
         if (is_array($files)) {
             $filtered = [];
             foreach ($files as $key => $file) {
@@ -43,7 +43,7 @@ trait FileLibrarySync
             }
             data_set($this, $filesModelName, $filtered);
         }
-        
+
         // Delete from permanent storage if the file exists there
         if (str_contains($url, '/storage/')) {
             $path = str($url)->after('/storage/')->before('?')->toString();
@@ -75,26 +75,26 @@ trait FileLibrarySync
 
         foreach ($newFiles as $key => $file) {
             $libraryCollection = data_get($this, $library);
-            
-            if (!($libraryCollection instanceof \Illuminate\Support\Collection)) {
+
+            if (! ($libraryCollection instanceof \Illuminate\Support\Collection)) {
                 $libraryCollection = collect($libraryCollection ?: []);
             }
-            
+
             // Check if file is previewable (image)
             $isPreviewable = $this->isPreviewableFile($file);
             $url = $isPreviewable ? $file->temporaryUrl() : $file->getClientOriginalName();
-            
+
             $libraryCollection = $libraryCollection->add([
-                'uuid' => Str::uuid()->toString(), 
+                'uuid' => \Str::uuid()->toString(),
                 'url' => $url,
                 'is_previewable' => $isPreviewable,
                 'mime_type' => $file->getMimeType(),
-                'extension' => $file->getClientOriginalExtension()
+                'extension' => $file->getClientOriginalExtension(),
             ]);
             data_set($this, $library, $libraryCollection);
 
             $key = $libraryCollection->keys()->last();
-            
+
             data_set($this, "$filesModelName.$key", $file);
         }
 
@@ -105,13 +105,13 @@ trait FileLibrarySync
             data_set($this, $filesModelName, $files);
         }
 
-        //Replace existing files
+        // Replace existing files
         $files = data_get($this, $filesModelName);
-        
+
         if ($files) {
             foreach ($files as $key => $file) {
                 $libraryCollection = data_get($this, $library);
-                
+
                 if ($libraryCollection instanceof \Illuminate\Support\Collection) {
                     $media = $libraryCollection->get($key);
                     if ($media) {
@@ -128,7 +128,7 @@ trait FileLibrarySync
             }
         }
 
-        $this->validateOnly($filesModelName . '.*');
+        $this->validateOnly($filesModelName.'.*');
     }
 
     // Storage files into permanent area and updates the target
@@ -140,19 +140,19 @@ trait FileLibrarySync
         string $visibility = 'public',
         string $disk = 'public',
         ?Model $model = null,
-        ?string $model_field = null
+        ?string $model_field = null,
     ): \Illuminate\Support\Collection {
         // Store files
         $filesData = data_get($this, $files);
-        
+
         if (is_array($filesData)) {
             foreach ($filesData as $index => $file) {
                 $libraryCollection = data_get($this, $library);
-                
-                if (!($libraryCollection instanceof \Illuminate\Support\Collection)) {
+
+                if (! ($libraryCollection instanceof \Illuminate\Support\Collection)) {
                     $libraryCollection = collect($libraryCollection ?: []);
                 }
-                
+
                 $media = $libraryCollection->get($index);
                 $name = $this->getFileName($media);
 
@@ -160,9 +160,9 @@ trait FileLibrarySync
                 $url = Storage::disk($disk)->url($storedPath);
 
                 // Update library
-                $media['url'] = $url . "?updated_at=" . time(); // cache busting mech
+                $media['url'] = $url.'?updated_at='.time(); // cache busting mech
                 $media['path'] = str($storage_subpath)->finish('/')->append($name)->toString();
-                
+
                 $libraryCollection = $libraryCollection->replace([$index => $media]);
                 data_set($this, $library, $libraryCollection);
             }
@@ -170,11 +170,11 @@ trait FileLibrarySync
 
         // Delete removed files from library
         $libraryCollection = data_get($this, $library);
-        
-        if (!($libraryCollection instanceof \Illuminate\Support\Collection)) {
+
+        if (! ($libraryCollection instanceof \Illuminate\Support\Collection)) {
             $libraryCollection = collect($libraryCollection ?: []);
         }
-        
+
         // Get existing library (from model or parameter)
         $existingData = null;
         if ($model && $model_field) {
@@ -182,8 +182,8 @@ trait FileLibrarySync
         } elseif ($existingLibrary !== null) {
             $existingData = collect($existingLibrary);
         }
-        
-        $diffs = $existingData?->filter(fn($item) => $libraryCollection->doesntContain('uuid', $item['uuid'])) ?? [];
+
+        $diffs = $existingData?->filter(fn ($item) => $libraryCollection->doesntContain('uuid', $item['uuid'])) ?? [];
 
         foreach ($diffs as $diff) {
             if (isset($diff['path'])) {
@@ -198,7 +198,7 @@ trait FileLibrarySync
 
         // Resets files
         data_set($this, $files, []);
-        
+
         return $libraryCollection;
     }
 
@@ -212,8 +212,10 @@ trait FileLibrarySync
 
     private function isPreviewableFile($file): bool
     {
-        if (!$file) return false;
-        
+        if (! $file) {
+            return false;
+        }
+
         try {
             $mimeType = $file->getMimeType();
             $previewableMimes = [
@@ -225,12 +227,13 @@ trait FileLibrarySync
                 'image/svg+xml',
                 'image/bmp',
             ];
-            
+
             return in_array($mimeType, $previewableMimes);
         } catch (\Exception $e) {
             // If we can't determine mime type, check extension as fallback
             try {
                 $extension = strtolower($file->getClientOriginalExtension());
+
                 return in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp']);
             } catch (\Exception $e) {
                 return false;

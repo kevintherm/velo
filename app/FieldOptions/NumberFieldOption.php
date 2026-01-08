@@ -40,7 +40,7 @@ class NumberFieldOption implements CollectionFieldOption
 
         return true;
     }
-    
+
     public function getValidationRules(): array
     {
         return [

@@ -12,8 +12,8 @@ class BaseCollectionHandler implements CollectionTypeHandler
         $fields = $record->collection->fields->keyBy('name');
         $data = $record->data;
 
-        if (!$record->exists && $fields->has('created')) {
-            if (!$data->has('created') || !filled($data->get('created'))) {
+        if (! $record->exists && $fields->has('created')) {
+            if (! $data->has('created') || ! filled($data->get('created'))) {
                 $data->put('created', now()->toIso8601String());
             }
         }

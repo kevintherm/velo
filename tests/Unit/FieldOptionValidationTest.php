@@ -2,7 +2,12 @@
 
 namespace Tests\Unit;
 
-use App\FieldOptions\{FileFieldOption, EmailFieldOption, DatetimeFieldOption, TextFieldOption, NumberFieldOption, BoolFieldOption};
+use App\FieldOptions\BoolFieldOption;
+use App\FieldOptions\DatetimeFieldOption;
+use App\FieldOptions\EmailFieldOption;
+use App\FieldOptions\FileFieldOption;
+use App\FieldOptions\NumberFieldOption;
+use App\FieldOptions\TextFieldOption;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
@@ -15,7 +20,7 @@ class FieldOptionValidationTest extends TestCase
             maxSize: 5000000,
             minSize: 1000,
             multiple: true,
-            maxFiles: 5
+            maxFiles: 5,
         );
 
         $rules = $option->getValidationRules();
@@ -32,7 +37,7 @@ class FieldOptionValidationTest extends TestCase
     public function test_email_field_option_validation_rules()
     {
         $option = new EmailFieldOption(
-            allowedDomains: ['gmail.com', 'company.com']
+            allowedDomains: ['gmail.com', 'company.com'],
         );
 
         $rules = $option->getValidationRules();
@@ -48,7 +53,7 @@ class FieldOptionValidationTest extends TestCase
         $option = new TextFieldOption(
             minLength: 5,
             maxLength: 100,
-            pattern: '^[a-zA-Z]+$'
+            pattern: '^[a-zA-Z]+$',
         );
 
         $rules = $option->getValidationRules();
@@ -63,7 +68,7 @@ class FieldOptionValidationTest extends TestCase
         $option = new NumberFieldOption(
             min: 0,
             max: 100,
-            allowDecimals: true
+            allowDecimals: true,
         );
 
         $rules = $option->getValidationRules();
@@ -78,7 +83,7 @@ class FieldOptionValidationTest extends TestCase
     {
         $option = new DatetimeFieldOption(
             minDate: '2024-01-01',
-            maxDate: '2025-12-31'
+            maxDate: '2025-12-31',
         );
 
         $rules = $option->getValidationRules();
@@ -89,7 +94,7 @@ class FieldOptionValidationTest extends TestCase
 
     public function test_bool_field_option_validation_rules()
     {
-        $option = new BoolFieldOption();
+        $option = new BoolFieldOption;
         $rules = $option->getValidationRules();
 
         $this->assertEmpty($rules);
@@ -100,15 +105,15 @@ class FieldOptionValidationTest extends TestCase
         $option = new TextFieldOption(
             minLength: 5,
             maxLength: 10,
-            pattern: '^[a-z]+$'
+            pattern: '^[a-z]+$',
         );
 
         $rules = $option->getValidationRules();
-        
+
         $validator = Validator::make([
             'minLength' => 5,
             'maxLength' => 10,
-            'pattern' => '^[a-z]+$'
+            'pattern' => '^[a-z]+$',
         ], $rules);
 
         $this->assertFalse($validator->fails());

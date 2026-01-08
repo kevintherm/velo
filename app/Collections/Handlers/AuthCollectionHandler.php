@@ -16,5 +16,5 @@ class AuthCollectionHandler implements CollectionTypeHandler
         }
 
         $record->data = $data;
-    }   
+    }
 }

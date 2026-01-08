@@ -52,8 +52,8 @@ class FileFieldOption implements CollectionFieldOption
         return [
             'allowedMimeTypes' => ['array'],
             'allowedMimeTypes.*' => ['string'],
-            'maxSize' => ['nullable', 'integer', 'min:1', 'max:' . PHP_INT_MAX],
-            'minSize' => ['nullable', 'integer', 'min:0', 'max:' . PHP_INT_MAX],
+            'maxSize' => ['nullable', 'integer', 'min:1', 'max:'.PHP_INT_MAX],
+            'minSize' => ['nullable', 'integer', 'min:0', 'max:'.PHP_INT_MAX],
             'multiple' => ['boolean'],
             'maxFiles' => ['nullable', 'integer', 'min:1'],
             'generateThumbnail' => ['boolean'],

@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Enums\CollectionType;
-use App\Models\CollectionField;
 use App\Services\RecordQueryCompiler;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,7 +15,7 @@ class Collection extends Model
     protected function casts(): array
     {
         return [
-            'type' => CollectionType::class
+            'type' => CollectionType::class,
         ];
     }
 

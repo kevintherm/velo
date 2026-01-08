@@ -3,9 +3,9 @@
 namespace App\Services\IndexStrategies;
 
 use App\Contracts\IndexStrategy;
+use App\Exceptions\IndexOperationException;
 use App\Helper;
 use App\Models\Collection;
-use App\Exceptions\IndexOperationException;
 use Illuminate\Support\Facades\DB;
 
 class PostgresIndexStrategy implements IndexStrategy
@@ -15,8 +15,8 @@ class PostgresIndexStrategy implements IndexStrategy
         try {
             $indexName = Helper::generateIndexName($collection, $fieldName, $unique);
 
-            $sql = "
-                CREATE " . ($unique ? 'UNIQUE ' : '') . "INDEX IF NOT EXISTS {$indexName}
+            $sql = '
+                CREATE '.($unique ? 'UNIQUE ' : '')."INDEX IF NOT EXISTS {$indexName}
                 ON records ((data->>'{$fieldName}'));
             ";
 
@@ -24,10 +24,10 @@ class PostgresIndexStrategy implements IndexStrategy
 
             DB::table('collection_indexes')->updateOrInsert(
                 ['collection_id' => $collection->id, 'field_name' => $fieldName],
-                ['index_name' => $indexName, 'unique' => $unique]
+                ['index_name' => $indexName, 'unique' => $unique],
             );
         } catch (\Exception $e) {
-            throw new IndexOperationException("Failed to create PostgreSQL index for field '{$fieldName}': " . $e->getMessage(), 0, $e);
+            throw new IndexOperationException("Failed to create PostgreSQL index for field '{$fieldName}': ".$e->getMessage(), 0, $e);
         }
     }
 
@@ -51,12 +51,12 @@ class PostgresIndexStrategy implements IndexStrategy
                     ->delete();
             }
         } catch (\Exception $e) {
-            throw new IndexOperationException("Failed to drop PostgreSQL index for field '{$fieldName}': " . $e->getMessage(), 0, $e);
+            throw new IndexOperationException("Failed to drop PostgreSQL index for field '{$fieldName}': ".$e->getMessage(), 0, $e);
         }
     }
 
     public function hasIndex(string $indexName): bool
     {
-        throw new \Exception("Not implemented.");
+        throw new \Exception('Not implemented.');
     }
 }

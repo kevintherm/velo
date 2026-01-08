@@ -10,15 +10,15 @@ enum FieldType: string
     case Bool = 'boolean';
     case Datetime = 'datetime';
     case File = 'file';
-    
+
     public static function toArray(): array
     {
         return array_map(
             fn ($case) => [
-                'id'   => $case->value,
+                'id' => $case->value,
                 'name' => $case->name,
             ],
-            self::cases()
+            self::cases(),
         );
     }
 }
