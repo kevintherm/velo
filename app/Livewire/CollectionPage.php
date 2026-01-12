@@ -151,7 +151,7 @@ class CollectionPage extends Component
         $this->fillCollectionIndexes();
         $this->breadcrumbs = [
             ['link' => route('home'), 'icon' => 's-home'],
-            ['label' => ucfirst(request()->segment(2))],
+            ['label' => ucfirst(request()->route()->getName())],
             ['label' => $this->collection->name],
         ];
     }
@@ -180,6 +180,7 @@ class CollectionPage extends Component
     #[Computed]
     public function tableHeaders(): array
     {
+        $this->fillFieldsVisibility();
         return $this->fields
             ->filter(fn($f) => isset($this->fieldsVisibility[$f->name]) && $this->fieldsVisibility[$f->name])
             ->sortBy('order')
@@ -612,6 +613,9 @@ class CollectionPage extends Component
             'id' => time(),
             'name' => $field['name'] . '__copy',
             'order' => $targetIndex,
+            'locked' => false,
+            'indexed' => false,
+            'unique' => false,
         ];
 
         array_splice($this->collectionForm['fields'], $targetIndex, 0, [$newField]);
@@ -800,13 +804,13 @@ class CollectionPage extends Component
             if ($e->validator->errors()->has('collectionForm.api_rules.*')) {
                 $this->tabSelected = 'api-rules-tab';
             }
-            
+
             throw $e;
         }
     }
 
     public function saveCollection()
-    {   
+    {
         $this->validateCollectionForm();
 
         try {

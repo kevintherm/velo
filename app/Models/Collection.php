@@ -46,8 +46,6 @@ class Collection extends Model
             'create' => "SUPERUSER_ONLY",
             'update' => "SUPERUSER_ONLY",
             'delete' => "SUPERUSER_ONLY",
-            'authenticate' => '',
-            'manage' => 'SUPERUSER_ONLY',
         ];
     }
 
@@ -109,9 +107,17 @@ class Collection extends Model
     protected static function booted()
     {
         static::saving(function (Collection $collection) {
+            if ($collection->api_rules == null && $collection->type === CollectionType::Base) {
+                $collection->api_rules = [
+                    ...static::getDefaultApiRules(),
+                ];
+            }
+
             if ($collection->api_rules == null && $collection->type === CollectionType::Auth) {
                 $collection->api_rules = [
                     ...static::getDefaultApiRules(),
+                    'authenticate' => '',
+                    'manage' => 'SUPERUSER_ONLY',
                     'list' => '@request.auth.id = id',
                     'view' => '@request.auth.id = id',
                     'update' => '@request.auth.id = id',

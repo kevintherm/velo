@@ -5,3 +5,4 @@ IMPROVEMENT:
 - refactor file handling
 - add auto generate thumbnail feature for created lifecycle
 - add whereIn record query compiler for efficient filterings
+- upgrade livewire 4 to use island feature

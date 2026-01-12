@@ -370,7 +370,7 @@
                                                                             placeholder="e.g., /^[A-Z]/" :disabled="$field->name === 'password'" />
                                                                         <x-input label="Auto Generate Pattern (Regex)"
                                                                             wire:model="collectionForm.fields.{{ $index }}.options.autoGeneratePattern"
-                                                                            placeholder="e.g., /^[A-Z]/" :disabled="$field->name === 'password'" />
+                                                                            placeholder="e.g., INV-[0-9]{5}" :disabled="$field->name === 'password'" />
                                                                     @break
 
                                                                     @case(App\Enums\FieldType::Email)

@@ -39,7 +39,7 @@ function getIcon($type){
     @foreach ($projects as $project)
         <x-menu-sub :title="$project->name" icon="o-circle-stack" :open="$loop->first" active-by-route>
             @foreach ($project->collections()->oldest()->get() as $c)
-                <x-menu-item :title="$c->name" :icon="getIcon($c->type)" link="{{ route('collection', ['collection' => $c]) }}" />
+                <x-menu-item :title="$c->name" :icon="getIcon($c->type)" link="{{ route('collection', ['collection' => $c]) }}" wire:navigate />
             @endforeach
         </x-menu-sub>
     @endforeach
