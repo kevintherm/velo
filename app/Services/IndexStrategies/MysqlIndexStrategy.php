@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class MysqlIndexStrategy implements IndexStrategy
 {
-    protected function executeIndexSql($collection, $fieldNames, $indexName, $unique)
+    private function executeIndexSql($collection, $fieldNames, $indexName, $unique)
     {
         $alterParts = [];
         foreach ($fieldNames as $name) {
@@ -40,7 +40,7 @@ class MysqlIndexStrategy implements IndexStrategy
         $virtualColNames = array_map(fn ($name) => Helper::generateVirtualColumnName($collection, $name), $fieldNames);
 
         try {
-            $this->executeIndexSql($collection, $fieldNames, $indexName, $unique);
+            self::executeIndexSql($collection, $fieldNames, $indexName, $unique);
 
             DB::table('collection_indexes')->updateOrInsert(
                 ['collection_id' => $collection->id, 'index_name' => $indexName],

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Collection;
 use App\Models\Record;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection as DataCollection;
 use Illuminate\Support\Facades\DB;
@@ -194,9 +195,34 @@ class RecordQueryCompiler
         return $result;
     }
 
+    public function firstRawOrFail($casts = false): ?Record
+    {
+        $result = $this->buildQuery(Record::query())->firstOrFail();
+        if ($casts && $result?->data) {
+            $this->casts($result->data);
+        }
+
+        return $result;
+    }
+
     public function first(): ?Record
     {
         $result = $this->buildQuery(Record::query())->first();
+        if ($result?->data) {
+            $this->casts($result->data);
+        }
+
+        return $result;
+    }
+
+    public function firstOrFail(): Record
+    {
+        $result = $this->buildQuery(Record::query())->first();
+
+        if (!$result) {
+            throw new ModelNotFoundException();
+        }
+
         if ($result?->data) {
             $this->casts($result->data);
         }

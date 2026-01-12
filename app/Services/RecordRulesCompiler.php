@@ -15,22 +15,71 @@ use App\Models\CollectionField;
 use App\Rules\AllowedEmailDomains;
 use App\Rules\BlockedEmailDomains;
 use Illuminate\Validation\Rule;
+use LogicException;
 
 class RecordRulesCompiler
 {
     public function __construct(
         protected Collection $collection,
-        private IndexStrategy $indexManager,
+        // private IndexStrategy $indexManager, // refactor later
         private ?string $ignoreId = null,
         private ?array $formObject = null,
     ) {}
+
+    public function forCollection(Collection $collection): self
+    {
+        $this->collection = $collection;
+        return $this;
+    }
+
+    public function using(IndexStrategy $strategy): self
+    {
+        $this->indexStrategy = $strategy;
+        return $this;
+    }
+
+    public function ignoreId(?string $id): self
+    {
+        $this->ignoreId = $id;
+        return $this;
+    }
+
+    public function withForm(array $form): self
+    {
+        $this->form = $form;
+        return $this;
+    }
 
     /**
      * Returns a laravel style rules for each fields.
      *
      * @return string[][]
      */
-    public function getRules(string $prefix = ''): array
+    public function compile(string $prefix = ''): array
+    {
+        // validate required state
+        $this->assertReady();
+
+        return $this->getRules($prefix);
+    }
+
+    protected function assertReady(): void
+    {
+        if (!isset($this->collection)) {
+            throw new LogicException('Collection not set');
+        }
+
+        if (!isset($this->indexStrategy)) {
+            throw new LogicException('Index strategy not set');
+        }
+    }
+
+    /**
+     * Returns a laravel style rules for each fields.
+     *
+     * @return string[][]
+     */
+    protected function getRules(string $prefix = ''): array
     {
         $rules = [];
 
@@ -46,7 +95,7 @@ class RecordRulesCompiler
                 continue;
             }
 
-            $rules[$prefix.$field->name] = $fieldRules;
+            $rules[$prefix . $field->name] = $fieldRules;
         }
 
         return $rules;
@@ -65,36 +114,13 @@ class RecordRulesCompiler
         // Basic required/nullable rules
         if ($field->name === 'id') {
             $fieldRules[] = 'nullable';
-        } elseif ($field->required && $field->type !== FieldType::File) {
+        } elseif ($field->required && $this->ignoreId == null) {
             $fieldRules[] = 'required';
-        } elseif ($field->required && $field->type === FieldType::File) {
-            $fieldRules[] = 'required';
-            $fieldRules[] = 'min:1';
-        } else {
+        }else {
             $fieldRules[] = 'nullable';
         }
 
         if ($field->unique) {
-            // $virtualCol = Helper::generateVirtualColumnName($collection, $field->name);
-            // $indexName = Helper::generateIndexName($collection, $field->name, true);
-
-            // if ($this->indexManager->hasIndex($indexName)) {
-            //     $fieldRules[] = Rule::unique('records', $virtualCol)
-            //         ->where('collection_id', $collection->id)
-            //         ->ignore($this->ignoreId);
-            // } else {
-            //     // Slow fallback for non-indexed fields
-            //     \Log::alert('Unique index not found. Reverting to fallback.', [
-            //         'collection' => $collection->name,
-            //         'field' => $field->name
-            //     ]);
-
-            //     $fieldRules[] = Rule::unique('records', "data->>{$field->name}")
-            //         ->where('collection_id', $collection->id)
-            //         ->ignore($this->ignoreId);
-            // }
-
-            \DB::enableQueryLog();
             $indexes = \DB::table('collection_indexes')
                 ->where('collection_id', $collection->id)
                 ->whereJsonContains('field_names', $field->name)
@@ -178,11 +204,11 @@ class RecordRulesCompiler
                 break;
 
             case $options instanceof EmailFieldOption:
-                if ($options->allowedDomains !== null && ! empty($options->allowedDomains)) {
+                if ($options->allowedDomains !== null && !empty($options->allowedDomains)) {
                     $rules[] = 'email:rfc,dns,filter';
                     $rules[] = new AllowedEmailDomains($options->allowedDomains);
                 }
-                if ($options->blockedDomains !== null && ! empty($options->blockedDomains)) {
+                if ($options->blockedDomains !== null && !empty($options->blockedDomains)) {
                     $rules[] = new BlockedEmailDomains($options->blockedDomains);
                 }
                 break;
@@ -194,7 +220,7 @@ class RecordRulesCompiler
                 if ($options->max !== null) {
                     $rules[] = "max:{$options->max}";
                 }
-                if (! $options->allowDecimals) {
+                if (!$options->allowDecimals) {
                     $rules[] = 'integer';
                     $rules[] = 'integer,decimal:0,2';
                 }
@@ -210,7 +236,7 @@ class RecordRulesCompiler
                 break;
 
             case $options instanceof FileFieldOption:
-                if ($options->allowedMimeTypes !== null && ! empty($options->allowedMimeTypes)) {
+                if ($options->allowedMimeTypes !== null && !empty($options->allowedMimeTypes)) {
                     $mimes = implode(',', $options->allowedMimeTypes);
                     $rules[] = "mimetypes:{$mimes}";
                 }

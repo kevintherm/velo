@@ -145,8 +145,7 @@ class CollectionPage extends Component
         'statusbar' => false,
 
         'toolbar' =>
-            'undo redo | ' .
-            'blocks fontfamily fontsize | ' .
+            'undo redo blocks fontfamily fontsize | ' .
             'bold italic underline strikethrough | ' .
             'forecolor backcolor | ' .
             'alignleft aligncenter alignright alignjustify | ' .
@@ -189,11 +188,6 @@ class CollectionPage extends Component
         $this->resetPage();
     }
 
-    public function updatedFields()
-    {
-        $this->fillFieldsVisibility();
-    }
-
     public function toggleField(string $field)
     {
         if (!\array_key_exists($field, $this->fieldsVisibility)) {
@@ -206,6 +200,7 @@ class CollectionPage extends Component
     #[Computed]
     public function tableHeaders(): array
     {
+        $this->fillFieldsVisibility();
         return $this->fields
             ->filter(fn($f) => isset($this->fieldsVisibility[$f->name]) && $this->fieldsVisibility[$f->name])
             ->sortBy('order')
@@ -404,36 +399,43 @@ class CollectionPage extends Component
         );
     }
 
-    public function saveRecord(): void
+    protected function validateRecord(): array
     {
         $recordId = $this->form['id_old'] ?? null;
-        $status = $recordId ? 'Updated' : 'Created';
-        $record = null;
 
-        $rulesCompiler = new RecordRulesCompiler($this->collection, new MysqlIndexStrategy, ignoreId: $recordId, formObject: $this->form);
-
-        $rules = $rulesCompiler->getRules(prefix: 'form.');
-        $messages = [];
         $attributes = [];
-
-        if ($recordId) {
-            $record = $this->collection->queryCompiler()->filter('id', '=', $recordId)->firstRaw();
-        }
+        $rules = app(RecordRulesCompiler::class)
+            ->forCollection($this->collection)
+            ->using(new MysqlIndexStrategy)
+            ->ignoreId($recordId)
+            ->withForm($this->form)
+            ->compile(prefix: 'form.');
 
         foreach ($rules as $ruleName => $rule) {
             if (str_ends_with($ruleName, '.*')) {
                 $index = Str::between($ruleName, 'fields.', '.options');
                 $attributes[$ruleName] = "value on [{$index}]";
-
                 continue;
             }
 
             $newName = explode('.', $ruleName);
-            $newName = $newName[\count($newName) - 1];
+            $newName = end($newName);
             $attributes[$ruleName] = Str::lower(Str::headline($newName));
         }
 
-        $this->validate($rules, $messages, $attributes);
+        return $this->validate($rules, [], $attributes);
+    }
+
+    public function saveRecord(): void
+    {
+        $this->validateRecord();
+    
+        $recordId = $this->form['id_old'] ?? null;
+        $status = $recordId ? 'Updated' : 'Created';
+        
+        $record = $recordId 
+            ? $this->collection->queryCompiler()->filter('id', '=', $recordId)->firstRaw() 
+            : null;
 
         if ($record) {
             // Sync file fields to storage and update form

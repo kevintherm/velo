@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\FieldOptionCast;
+use App\Enums\CollectionType;
 use App\Enums\FieldType;
 use App\Helper;
 use Illuminate\Database\Eloquent\Model;
@@ -98,6 +99,7 @@ class CollectionField extends Model
                 'unique' => false,
                 'required' => true,
                 'locked' => true,
+                'hidden' => true,
                 'options' => [],
             ],
 
@@ -127,6 +129,10 @@ class CollectionField extends Model
     protected static function booted()
     {
         static::saving(function (CollectionField $field) {
+            if ($field->collection->type === CollectionType::Auth && $field->name === 'password') {
+                $field->hidden = true;
+            }
+            
             if ($field->order === null) {
                 $maxOrder = static::where('collection_id', $field->collection_id)->max('order');
                 $field->order = ($maxOrder ?? -1) + 1;

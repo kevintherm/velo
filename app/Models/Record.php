@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Collections\Handlers\CollectionTypeHandlerResolver;
+use App\Enums\FieldType;
 use App\Exceptions\InvalidRecordException;
 use Illuminate\Database\Eloquent\Casts\AsCollection;
 use Illuminate\Database\Eloquent\Model;
@@ -24,10 +25,25 @@ class Record extends Model
         return $this->belongsTo(Collection::class);
     }
 
+    public function serialize()
+    {
+        return collect(['collection_id' => $this->collection_id])->merge($this->data);
+    }
+
+    public static function defaultValueFor(FieldType $type)
+{
+    return match ($type) {
+        FieldType::Text => '',
+        FieldType::Number => 0,
+        FieldType::Bool => false,
+        default => null,
+    };
+}
+
     protected static function booted(): void
     {
         static::saving(function (Record $record) {
-            if (! $record->relationLoaded('collection')) {
+            if (!$record->relationLoaded('collection')) {
                 $record->load('collection.fields');
             }
 
@@ -35,7 +51,7 @@ class Record extends Model
             $fieldNames = $fields->keys()->sort()->values()->toArray();
             $data = $record->data;
 
-            if (! $data->has('id') || empty($data->get('id'))) {
+            if (!$data->has('id') || empty($data->get('id'))) {
                 $min = $fields['id']->options->minLength ?? 16;
                 $max = $fields['id']->options->maxLength ?? 16;
                 $length = random_int($min, $max);
@@ -59,7 +75,7 @@ class Record extends Model
                     : $originalData;
 
                 foreach ($fieldNames as $fieldName) {
-                    if (! $data->has($fieldName) && isset($originalData[$fieldName])) {
+                    if (!$data->has($fieldName) && isset($originalData[$fieldName])) {
                         $data->put($fieldName, $originalData[$fieldName]);
                     }
                 }
@@ -74,8 +90,15 @@ class Record extends Model
             $dataKeys = $data->keys()->sort()->values()->toArray();
             $missingFields = array_diff($fieldNames, $dataKeys);
 
-            if (! empty($missingFields)) {
-                throw new InvalidRecordException('Record structure mismatch. Missing required fields: '.implode(', ', $missingFields).'. Expected all fields: '.implode(', ', $fieldNames));
+            foreach($missingFields as $field) {
+                $data[$field] = self::defaultValueFor($fields[$field]->type);
+            }
+
+            $dataKeys = $data->keys()->sort()->values()->toArray();
+            $missingFields = array_diff($fieldNames, $dataKeys);
+
+            if (!empty($missingFields)) {
+                throw new InvalidRecordException('Record structure mismatch. Missing required fields: ' . implode(', ', $missingFields) . '. Expected all fields: ' . implode(', ', $fieldNames));
             }
         });
     }

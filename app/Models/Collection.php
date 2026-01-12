@@ -28,6 +28,11 @@ class Collection extends Model
         return $this->hasMany(CollectionField::class)->orderBy('order');
     }
 
+    public function records()
+    {
+        return $this->hasMany(Record::class);
+    }
+
     public function indexes()
     {
         return $this->hasMany(CollectionIndex::class, 'collection_id');

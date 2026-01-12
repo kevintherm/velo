@@ -11,7 +11,7 @@ class AuthCollectionHandler implements CollectionTypeHandler
     {
         $data = $record->data;
 
-        if ($data->has('password_new') && filled($data->get('password_new'))) {
+        if ((!$record->exists && $data->has('password')) || ($data->has('password_new') && filled($data->get('password_new')))) {
             $data->put('password', Hash::make($data->get('password')));
         }
 
