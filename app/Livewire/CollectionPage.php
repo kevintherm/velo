@@ -138,6 +138,27 @@ class CollectionPage extends Component
         ],
     ];
 
+    public array $tinyMceConfig = [
+        'plugins' => 'autoresize lists link image table code quickbars',
+        'min_height' => 150,
+        'max_height' => 250,
+        'statusbar' => false,
+
+        'toolbar' =>
+            'undo redo | ' .
+            'blocks fontfamily fontsize | ' .
+            'bold italic underline strikethrough | ' .
+            'forecolor backcolor | ' .
+            'alignleft aligncenter alignright alignjustify | ' .
+            'bullist numlist outdent indent | ' .
+            'link image table | ' .
+            'removeformat | ' .
+            'code |',
+
+        'quickbars_selection_toolbar' => 'bold italic underline | link',
+        'quickbars_insert_toolbar' => 'quickimage quicktable',
+    ];
+
     public function mount(Collection $collection): void
     {
         $this->collection = $collection;
@@ -168,6 +189,11 @@ class CollectionPage extends Component
         $this->resetPage();
     }
 
+    public function updatedFields()
+    {
+        $this->fillFieldsVisibility();
+    }
+
     public function toggleField(string $field)
     {
         if (!\array_key_exists($field, $this->fieldsVisibility)) {
@@ -180,7 +206,6 @@ class CollectionPage extends Component
     #[Computed]
     public function tableHeaders(): array
     {
-        $this->fillFieldsVisibility();
         return $this->fields
             ->filter(fn($f) => isset($this->fieldsVisibility[$f->name]) && $this->fieldsVisibility[$f->name])
             ->sortBy('order')

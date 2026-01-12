@@ -9,6 +9,7 @@ use App\FieldOptions\DatetimeFieldOption;
 use App\FieldOptions\EmailFieldOption;
 use App\FieldOptions\FileFieldOption;
 use App\FieldOptions\NumberFieldOption;
+use App\FieldOptions\RichTextFieldOption;
 use App\FieldOptions\TextFieldOption;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Model;
@@ -111,7 +112,8 @@ class FieldOptionCast implements CastsAttributes
             FieldType::Bool => BoolFieldOption::class,
             FieldType::Datetime => DatetimeFieldOption::class,
             FieldType::File => FileFieldOption::class,
-            default => null,
+            FieldType::RichText => RichTextFieldOption::class,
+            default => throw new \Exception("Field Type {$fieldType->name} is not supported."),
         };
     }
 }

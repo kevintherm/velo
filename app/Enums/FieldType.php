@@ -9,6 +9,7 @@ enum FieldType: string
     case Number = 'number';
     case Bool = 'boolean';
     case Datetime = 'datetime';
+    case RichText = 'richtext';
     case File = 'file';
 
     public static function toArray(): array

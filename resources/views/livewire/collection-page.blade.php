@@ -2,6 +2,7 @@
     <script src="https://cdn.jsdelivr.net/npm/photoswipe@5.4.3/dist/umd/photoswipe.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/photoswipe@5.4.3/dist/umd/photoswipe-lightbox.umd.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/photoswipe@5.4.3/dist/photoswipe.min.css" rel="stylesheet">
+    <script src="https://cdn.tiny.cloud/1/{{ env('TINYMCE_KEY') }}/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 @endassets
 
 <div>
@@ -167,7 +168,7 @@
 
     {{-- MODALS --}}
 
-    <x-drawer wire:model="showRecordDrawer" class="w-full lg:w-1/3" right>
+    <x-drawer wire:model="showRecordDrawer" class="w-full lg:w-2/5" right without-trap-focus>
         <div class="flex justify-between">
             <div class="flex items-center gap-2">
                 <x-button icon="o-x-mark" class="btn-circle btn-ghost" x-on:click="$wire.showRecordDrawer = false" />
@@ -213,7 +214,7 @@
                         wire:model="form.{{ $field->name }}" :icon="$field->getIcon()" readonly
                         wire:loading.attr="disabled" wire:target="fillRecordForm" />
                     @continue
-                @elseif ($field->collection->type === App\Enums\CollectionType::Auth && $field->name === 'password')
+                @elseif ($field->collection->type === App\Enums\CollectionType::Auth && $field->name === 'password' && $field->collection->type === \App\Enums\CollectionType::Auth)
                     @if (empty($form['password']))
                         <x-password :wire:key="$field->name" :label="$field->name" wire:model="form.{{ $field->name }}"
                             :password-icon="$field->getIcon()" placeholder=""
@@ -255,6 +256,12 @@
                         <x-file-library :wire:key="$field->name" :label="$field->name" wire:model="files.{{ $field->name }}"
                             wire:library="library.{{ $field->name }}" :preview="data_get($library, $field->name, collect([]))" hint="rule" accept="*"
                             wire:loading.attr="disabled" wire:target="fillRecordForm" :required="$field->required == true" />
+                    @break
+
+                    @case(\App\Enums\FieldType::RichText)
+                        <x-editor :wire:key="$field->name" :label="$field->name" wire:model="form.{{ $field->name }}"
+                            :icon="$field->getIcon()" :required="$field->required == true" wire:loading.attr="disabled"
+                            :config="$tinyMceConfig" wire:target="fillRecordForm" />
                     @break
 
                     @default
@@ -361,16 +368,16 @@
                                                                     @case(App\Enums\FieldType::Text)
                                                                         <x-input label="Min Length" type="number"
                                                                             wire:model="collectionForm.fields.{{ $index }}.options.minLength"
-                                                                            placeholder="No minimum" min="0" :disabled="$field->name === 'password'" />
+                                                                            placeholder="No minimum" min="0" :disabled="$field->name === 'password' && $field->collection->type === \App\Enums\CollectionType::Auth" />
                                                                         <x-input label="Max Length" type="number"
                                                                             wire:model="collectionForm.fields.{{ $index }}.options.maxLength"
-                                                                            placeholder="No maximum" min="1" :disabled="$field->name === 'password'" />
+                                                                            placeholder="No maximum" min="1" :disabled="$field->name === 'password' && $field->collection->type === \App\Enums\CollectionType::Auth" />
                                                                         <x-input label="Pattern (Regex)"
                                                                             wire:model="collectionForm.fields.{{ $index }}.options.pattern"
-                                                                            placeholder="e.g., /^[A-Z]/" :disabled="$field->name === 'password'" />
+                                                                            placeholder="e.g., /^[A-Z]/" :disabled="$field->name === 'password' && $field->collection->type === \App\Enums\CollectionType::Auth" />
                                                                         <x-input label="Auto Generate Pattern (Regex)"
                                                                             wire:model="collectionForm.fields.{{ $index }}.options.autoGeneratePattern"
-                                                                            placeholder="e.g., INV-[0-9]{5}" :disabled="$field->name === 'password'" />
+                                                                            placeholder="e.g., INV-[0-9]{5}" :disabled="$field->name === 'password' && $field->collection->type === \App\Enums\CollectionType::Auth" />
                                                                     @break
 
                                                                     @case(App\Enums\FieldType::Email)
