@@ -14,8 +14,16 @@ class RecordController extends Controller
 {
     public function index(Request $request, Collection $collection): JsonResponse
     {
-        $perPage = $request->input('perPage', 100);
-        $records = $collection->records()->simplePaginate($perPage);
+        $perPage = $request->input('per_page', 100);
+        $page = $request->input('page', 1);
+        $filter = $request->input('filter', '');
+        $sort = $request->input('sort', '');
+
+        $records = $collection->queryCompiler()
+            ->filterFromString($filter)
+            ->sortFromString($sort)
+            ->simplePaginate($perPage, $page);
+
         return RecordResource::collection($records)->response();
     }
 
@@ -33,7 +41,7 @@ class RecordController extends Controller
         return $resource->response();
     }
 
-    public function update(RecordRequest $request, Collection $collection, string $recordId)
+    public function update(RecordRequest $request, Collection $collection, string $recordId): JsonResponse
     {
         $record = $collection->queryCompiler()->filter('id', '=', $recordId)->firstRawOrFail();
 
@@ -45,11 +53,11 @@ class RecordController extends Controller
         return $resource->response();
     }
 
-    public function delete(Collection $collection, string $recordId)
+    public function delete(Collection $collection, string $recordId): JsonResponse
     {
         $record = $collection->queryCompiler()->filter('id', '=', $recordId)->firstRawOrFail();
         $record->delete();
 
-        return Response::noContent();
+        return Response::json([], 204);
     }
 }

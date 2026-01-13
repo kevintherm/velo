@@ -2,13 +2,16 @@
 
 namespace App\Services;
 
-use App\Models\Collection;
-use App\Models\Record;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Models\Record;
+use App\Models\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection as DataCollection;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 
 class RecordQueryCompiler
 {
@@ -22,9 +25,12 @@ class RecordQueryCompiler
 
     protected ?int $page = null;
 
+    protected Builder|EloquentBuilder $query;
+
     public function __construct(Collection $collection)
     {
         $this->collection = $collection;
+        $this->query = Record::query();
     }
 
     // Append new rule to the filters value
@@ -85,8 +91,8 @@ class RecordQueryCompiler
         foreach ($operators as $op) {
             // Build regex pattern to find the operator
             $pattern = in_array($op, ['LIKE', 'like'])
-                ? '/\s+'.preg_quote($op, '/').'\s+/i'
-                : '/'.preg_quote($op, '/').'/';
+                ? '/\s+' . preg_quote($op, '/') . '\s+/i'
+                : '/' . preg_quote($op, '/') . '/';
 
             // Check if this operator exists in the segment
             if (preg_match($pattern, $segment, $matches, PREG_OFFSET_CAPTURE)) {
@@ -130,9 +136,31 @@ class RecordQueryCompiler
         return $this;
     }
 
+    public function sortFromString(string $sortString)
+    {
+        foreach (explode(',', $sortString) as $part) {
+            $part = trim($part);
+            if (empty($part))
+                continue;
+
+            $direction = str_starts_with($part, '-') ? 'desc' : 'asc';
+            $field = ltrim($part, '-');
+
+            $this->sort($field, $direction);
+        }
+
+        return $this;
+    }
+
+    public function fromQuery(Builder|EloquentBuilder $query)
+    {
+        $this->query = $query;
+        return $this;
+    }
+
     protected function buildQuery($baseQuery = null, $select = ['data'])
     {
-        $query = ($baseQuery ?? DB::table('records')
+        $query = ($this->query ?? $baseQuery ?? DB::table('records')
             ->select($select))
             ->where('collection_id', $this->collection?->id);
 
@@ -230,6 +258,28 @@ class RecordQueryCompiler
         return $result;
     }
 
+    public function simplePaginate(?int $perPage = null, ?int $page = null)
+    {
+        $perPage = $perPage ?? 15;
+        $currentPage = $page ?? Paginator::resolveCurrentPage();
+
+        $query = $this->buildQuery();
+        $items = $query
+            ->offset(($currentPage - 1) * $this->perPage)
+            ->limit($this->perPage + 1)
+            ->get();
+
+        return new Paginator(
+            $items,
+            $perPage,
+            $currentPage,
+            [
+                'path' => Paginator::resolveCurrentPath(),
+                'pageName' => 'page',
+            ]
+        );
+    }
+
     public function paginate(?int $perPage = null, ?int $page = null)
     {
         if ($perPage !== null) {
@@ -253,7 +303,7 @@ class RecordQueryCompiler
             ->offset(($currentPage - 1) * $this->perPage)
             ->limit($this->perPage)
             ->get()
-            ->map(fn ($d) => json_decode($d->data));
+            ->map(fn($d) => json_decode($d->data));
 
         return new LengthAwarePaginator(
             $results,
