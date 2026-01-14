@@ -113,9 +113,7 @@ class Collection extends Model
     {
         static::saving(function (Collection $collection) {
             if ($collection->api_rules == null && $collection->type === CollectionType::Base) {
-                $collection->api_rules = [
-                    ...static::getDefaultApiRules(),
-                ];
+                $collection->api_rules = static::getDefaultApiRules();
             }
 
             if ($collection->api_rules == null && $collection->type === CollectionType::Auth) {

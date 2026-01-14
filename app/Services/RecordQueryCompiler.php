@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\FieldType;
 use Carbon\Carbon;
 use App\Models\Record;
 use App\Models\Collection;
@@ -20,6 +21,8 @@ class RecordQueryCompiler
     protected $filters = [];
 
     protected $sorts = [];
+
+    protected $expands = [];
 
     protected int $perPage = 15;
 
@@ -129,6 +132,17 @@ class RecordQueryCompiler
         return $value;
     }
 
+    public function whereIn(string $field, array $values)
+    {
+        $this->filters[] = [
+            'field' => $field,
+            'operator' => 'IN',
+            'value' => $values,
+        ];
+
+        return $this;
+    }
+
     public function sort(string $field, string $direction = 'asc')
     {
         $this->sorts[] = compact('field', 'direction');
@@ -152,6 +166,26 @@ class RecordQueryCompiler
         return $this;
     }
 
+    public function expand(string $field)
+    {
+        $this->expands[] = $field;
+
+        return $this;
+    }
+
+    public function expandFromString(string $expandString)
+    {
+        foreach (explode(',', $expandString) as $part) {
+            $part = trim($part);
+            if (empty($part))
+                continue;
+
+            $this->expand($part);
+        }
+
+        return $this;
+    }
+
     public function fromQuery(Builder|EloquentBuilder $query)
     {
         $this->query = $query;
@@ -169,9 +203,37 @@ class RecordQueryCompiler
             foreach ($this->filters as $f) {
                 $virtualCol = \App\Helper::generateVirtualColumnName($this->collection, $f['field']);
                 $isIndexed = $this->isFieldIndexed($f['field']);
+                $isOr = isset($f['logical']) && strtoupper($f['logical']) === 'OR';
+
+                if ($f['operator'] === 'IN') {
+                    if (empty($f['value'])) {
+                        if (!$isOr) {
+                            $q->whereRaw('1 = 0');
+                        }
+
+                        continue;
+                    }
+
+                    if ($isIndexed) {
+                        $method = $isOr ? 'orWhereIn' : 'whereIn';
+                        $q->$method($virtualCol, $f['value']);
+                    } else {
+                        // Slow json extraction
+                        $placeholders = implode(',', array_fill(0, count($f['value']), '?'));
+                        $rawSql = "JSON_UNQUOTE(JSON_EXTRACT(data, '$.\"{$f['field']}\"')) IN ($placeholders)";
+
+                        if ($isOr) {
+                            $q->orWhereRaw($rawSql, $f['value']);
+                        } else {
+                            $q->whereRaw($rawSql, $f['value']);
+                        }
+                    }
+
+                    continue;
+                }
 
                 if ($isIndexed) {
-                    $method = (isset($f['logical']) && strtoupper($f['logical']) === 'OR') ? 'orWhere' : 'where';
+                    $method = $isOr ? 'orWhere' : 'where';
                     $q->$method($virtualCol, $f['operator'], $f['value']);
 
                     continue;
@@ -179,7 +241,7 @@ class RecordQueryCompiler
 
                 // Slow json extraction as fallback
                 $rawSql = "JSON_UNQUOTE(JSON_EXTRACT(data, '$.\"{$f['field']}\"')) {$f['operator']} ?";
-                if (isset($f['logical']) && strtoupper($f['logical']) === 'OR') {
+                if ($isOr) {
                     $q->orWhereRaw($rawSql, [$f['value']]);
                 } else {
                     $q->whereRaw($rawSql, [$f['value']]);
@@ -240,6 +302,10 @@ class RecordQueryCompiler
             $this->casts($result->data);
         }
 
+        if ($result) {
+            $this->expandRecord($result);
+        }
+
         return $result;
     }
 
@@ -255,12 +321,14 @@ class RecordQueryCompiler
             $this->casts($result->data);
         }
 
+        $this->expandRecord($result);
+
         return $result;
     }
 
     public function simplePaginate(?int $perPage = null, ?int $page = null)
     {
-        $perPage = $perPage ?? 15;
+        $perPage ??= 15;
         $currentPage = $page ?? Paginator::resolveCurrentPage();
 
         $query = $this->buildQuery();
@@ -268,6 +336,8 @@ class RecordQueryCompiler
             ->offset(($currentPage - 1) * $this->perPage)
             ->limit($this->perPage + 1)
             ->get();
+
+        $items = $this->expandRecords($items);
 
         return new Paginator(
             $items,
@@ -314,6 +384,114 @@ class RecordQueryCompiler
                 'path' => LengthAwarePaginator::resolveCurrentPath(),
             ],
         );
+    }
+
+    protected function expandRecord(Record $record): void
+    {
+        if (empty($this->expands)) return;
+
+        $relationFields = $this->collection->fields()
+            ->where('type', FieldType::Relation)
+            ->whereIn('name', $this->expands)
+            ->get()
+            ->keyBy('name');
+
+        foreach ($this->expands as $fieldName) {
+            if (!$relationFields->has($fieldName)) continue;
+
+            $relationField = $relationFields->get($fieldName);
+            $fieldValue = $record->data->get($relationField->name);
+
+            if (empty($fieldValue)) continue;
+
+            $idsToFetch = collect($fieldValue)->flatten()->unique()->filter()->values();
+            if ($idsToFetch->isEmpty()) continue;
+
+            $relatedCollection = Collection::find($relationField->options?->collection);
+            if (!$relatedCollection) continue;
+
+            $expandedRecords = $relatedCollection->recordQueryCompiler()
+                ->whereIn('id', $idsToFetch->toArray())
+                ->buildQuery()
+                ->get()
+                ->pluck('data')
+                ->keyBy('id');
+
+            $expand = $record->data->get('expand', []);
+            $idsFromRelation = collect($fieldValue);
+
+            if ($relationField->options?->multiple) {
+                $expand[$relationField->name] = $idsFromRelation
+                    ->map(fn($id) => $expandedRecords->get($id))
+                    ->filter()
+                    ->values();
+            } else {
+                $id = is_array($idsFromRelation->first()) ? null : $idsFromRelation->first();
+                $expand[$relationField->name] = $id ? $expandedRecords->get($id) : null;
+            }
+
+            $record->data->put('expand', $expand);
+        }
+    }
+
+    protected function expandRecords(\Illuminate\Database\Eloquent\Collection $results)
+    {
+        if (empty($this->expands) || $results->isEmpty()) {
+            return $results;
+        }
+
+        $relationFields = $this->collection->fields()
+            ->where('type', FieldType::Relation)
+            ->whereIn('name', $this->expands)
+            ->get()
+            ->keyBy('name');
+
+        foreach ($this->expands as $fieldName) {
+            if (!$relationFields->has($fieldName))
+                continue;
+
+            $relationField = $relationFields->get($fieldName);
+
+            $idsToFetch = $results
+                ->pluck('data')
+                ->pluck($relationField->name)
+                ->flatten()
+                ->unique()
+                ->filter()
+                ->values();
+            if ($idsToFetch->isEmpty())
+                continue;
+
+            $relatedCollection = Collection::find($relationField->options?->collection);
+            if (!$relatedCollection)
+                continue;
+
+            $expandedRecords = $relatedCollection->recordQueryCompiler()
+                ->whereIn('id', $idsToFetch->toArray())
+                ->buildQuery()
+                ->get()
+                ->pluck('data')
+                ->keyBy('id');
+
+            $results->each(function (Record $record) use ($relationField, $expandedRecords) {
+                $expand = $record->data->get('expand', []);
+                $idsFromRelation = collect($record->data->get($relationField->name, []));
+
+                if ($relationField->options?->multiple) {
+                    $expand[$relationField->name] = $idsFromRelation
+                        ->map(fn($id) => $expandedRecords->get($id))
+                        ->filter()
+                        ->values();
+                } else {
+                    $id = is_array($idsFromRelation->first()) ? null : $idsFromRelation->first();
+                    $expand[$relationField->name] = $id ? $expandedRecords->get($id) : null;
+                }
+
+                $record->data->put('expand', $expand);
+            });
+        }
+
+        return $results;
     }
 
     protected function isFieldIndexed(string $fieldName): bool

@@ -14,6 +14,7 @@ class RecordResource extends JsonResource
         foreach($this->collection->fields as $field) {
             if ($field->hidden) continue;
             $arr[$field->name] = $this->data[$field->name] ?? null;
+            if ($request->has('expand')) $arr['expand'] = $this->data['expand'];
         }
 
         return $arr;
