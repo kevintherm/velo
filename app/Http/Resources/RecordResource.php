@@ -9,12 +9,16 @@ class RecordResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $arr =  [];
+        $arr = [];
 
-        foreach($this->collection->fields as $field) {
-            if ($field->hidden) continue;
+        foreach ($this->collection->fields as $field) {
+            if ($field->hidden) {
+                continue;
+            }
             $arr[$field->name] = $this->data[$field->name] ?? null;
-            if ($request->has('expand')) $arr['expand'] = $this->data['expand'];
+            if ($request->has('expand')) {
+                $arr['expand'] = $this->data['expand'];
+            }
         }
 
         return $arr;

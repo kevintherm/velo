@@ -3,16 +3,16 @@
 namespace App\Services;
 
 use App\Enums\FieldType;
-use Carbon\Carbon;
-use App\Models\Record;
 use App\Models\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Pagination\Paginator;
+use App\Models\Record;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection as DataCollection;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Support\Facades\DB;
 
 class RecordQueryCompiler
 {
@@ -94,8 +94,8 @@ class RecordQueryCompiler
         foreach ($operators as $op) {
             // Build regex pattern to find the operator
             $pattern = in_array($op, ['LIKE', 'like'])
-                ? '/\s+' . preg_quote($op, '/') . '\s+/i'
-                : '/' . preg_quote($op, '/') . '/';
+                ? '/\s+'.preg_quote($op, '/').'\s+/i'
+                : '/'.preg_quote($op, '/').'/';
 
             // Check if this operator exists in the segment
             if (preg_match($pattern, $segment, $matches, PREG_OFFSET_CAPTURE)) {
@@ -154,8 +154,9 @@ class RecordQueryCompiler
     {
         foreach (explode(',', $sortString) as $part) {
             $part = trim($part);
-            if (empty($part))
+            if (empty($part)) {
                 continue;
+            }
 
             $direction = str_starts_with($part, '-') ? 'desc' : 'asc';
             $field = ltrim($part, '-');
@@ -177,8 +178,9 @@ class RecordQueryCompiler
     {
         foreach (explode(',', $expandString) as $part) {
             $part = trim($part);
-            if (empty($part))
+            if (empty($part)) {
                 continue;
+            }
 
             $this->expand($part);
         }
@@ -189,6 +191,7 @@ class RecordQueryCompiler
     public function fromQuery(Builder|EloquentBuilder $query)
     {
         $this->query = $query;
+
         return $this;
     }
 
@@ -207,7 +210,7 @@ class RecordQueryCompiler
 
                 if ($f['operator'] === 'IN') {
                     if (empty($f['value'])) {
-                        if (!$isOr) {
+                        if (! $isOr) {
                             $q->whereRaw('1 = 0');
                         }
 
@@ -313,8 +316,8 @@ class RecordQueryCompiler
     {
         $result = $this->buildQuery(Record::query())->first();
 
-        if (!$result) {
-            throw new ModelNotFoundException();
+        if (! $result) {
+            throw new ModelNotFoundException;
         }
 
         if ($result?->data) {
@@ -373,7 +376,7 @@ class RecordQueryCompiler
             ->offset(($currentPage - 1) * $this->perPage)
             ->limit($this->perPage)
             ->get()
-            ->map(fn($d) => json_decode($d->data));
+            ->map(fn ($d) => json_decode($d->data));
 
         return new LengthAwarePaginator(
             $results,
@@ -388,7 +391,9 @@ class RecordQueryCompiler
 
     protected function expandRecord(Record $record): void
     {
-        if (empty($this->expands)) return;
+        if (empty($this->expands)) {
+            return;
+        }
 
         $relationFields = $this->collection->fields()
             ->where('type', FieldType::Relation)
@@ -397,18 +402,26 @@ class RecordQueryCompiler
             ->keyBy('name');
 
         foreach ($this->expands as $fieldName) {
-            if (!$relationFields->has($fieldName)) continue;
+            if (! $relationFields->has($fieldName)) {
+                continue;
+            }
 
             $relationField = $relationFields->get($fieldName);
             $fieldValue = $record->data->get($relationField->name);
 
-            if (empty($fieldValue)) continue;
+            if (empty($fieldValue)) {
+                continue;
+            }
 
             $idsToFetch = collect($fieldValue)->flatten()->unique()->filter()->values();
-            if ($idsToFetch->isEmpty()) continue;
+            if ($idsToFetch->isEmpty()) {
+                continue;
+            }
 
             $relatedCollection = Collection::find($relationField->options?->collection);
-            if (!$relatedCollection) continue;
+            if (! $relatedCollection) {
+                continue;
+            }
 
             $expandedRecords = $relatedCollection->recordQueryCompiler()
                 ->whereIn('id', $idsToFetch->toArray())
@@ -422,7 +435,7 @@ class RecordQueryCompiler
 
             if ($relationField->options?->multiple) {
                 $expand[$relationField->name] = $idsFromRelation
-                    ->map(fn($id) => $expandedRecords->get($id))
+                    ->map(fn ($id) => $expandedRecords->get($id))
                     ->filter()
                     ->values();
             } else {
@@ -447,8 +460,9 @@ class RecordQueryCompiler
             ->keyBy('name');
 
         foreach ($this->expands as $fieldName) {
-            if (!$relationFields->has($fieldName))
+            if (! $relationFields->has($fieldName)) {
                 continue;
+            }
 
             $relationField = $relationFields->get($fieldName);
 
@@ -459,12 +473,14 @@ class RecordQueryCompiler
                 ->unique()
                 ->filter()
                 ->values();
-            if ($idsToFetch->isEmpty())
+            if ($idsToFetch->isEmpty()) {
                 continue;
+            }
 
             $relatedCollection = Collection::find($relationField->options?->collection);
-            if (!$relatedCollection)
+            if (! $relatedCollection) {
                 continue;
+            }
 
             $expandedRecords = $relatedCollection->recordQueryCompiler()
                 ->whereIn('id', $idsToFetch->toArray())
@@ -479,7 +495,7 @@ class RecordQueryCompiler
 
                 if ($relationField->options?->multiple) {
                     $expand[$relationField->name] = $idsFromRelation
-                        ->map(fn($id) => $expandedRecords->get($id))
+                        ->map(fn ($id) => $expandedRecords->get($id))
                         ->filter()
                         ->values();
                 } else {

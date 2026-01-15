@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Collection;
-use Illuminate\Http\JsonResponse;
 use App\Http\Requests\RecordRequest;
 use App\Http\Resources\RecordResource;
+use App\Models\Collection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Response;
 
 class RecordController extends Controller
@@ -35,8 +35,9 @@ class RecordController extends Controller
             ->filter('id', '=', $recordId)
             ->expandFromString($expand)
             ->firstOrFail();
-            
+
         $resource = new RecordResource($record);
+
         return $resource->response();
     }
 
@@ -44,6 +45,7 @@ class RecordController extends Controller
     {
         $record = $collection->records()->create(['data' => $request->validated()]);
         $resource = new RecordResource($record);
+
         return $resource->response();
     }
 
@@ -52,10 +54,11 @@ class RecordController extends Controller
         $record = $collection->recordQueryCompiler()->filter('id', '=', $recordId)->firstRawOrFail();
 
         $record->update([
-            'data' => [...$record->data->toArray(), ...$request->validated()]
+            'data' => [...$record->data->toArray(), ...$request->validated()],
         ]);
 
         $resource = new RecordResource($record);
+
         return $resource->response();
     }
 

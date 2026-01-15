@@ -12,7 +12,7 @@ class Spotlight
 {
     public function search(Request $request)
     {
-        if (!auth()->user()) {
+        if (! auth()->user()) {
             return [];
         }
 
@@ -38,9 +38,9 @@ class Spotlight
 
                 return [
                     'name' => $col->name,
-                    'description' => 'Collection | Updated ' . $col->updated_at->diffForHUmans(),
+                    'description' => 'Collection | Updated '.$col->updated_at->diffForHUmans(),
                     'link' => route('collection', ['collection' => $col]),
-                    'icon' => Blade::render("<x-icon name='$icon' />")
+                    'icon' => Blade::render("<x-icon name='$icon' />"),
                 ];
             });
 

@@ -10,5 +10,5 @@ return [
         'firstname',
         'first_name',
         'firstName',
-    ]
+    ],
 ];

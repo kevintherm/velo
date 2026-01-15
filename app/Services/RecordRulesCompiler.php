@@ -2,22 +2,22 @@
 
 namespace App\Services;
 
-use App\Helper;
-use LogicException;
-use App\Enums\FieldType;
-use App\Models\Collection;
-use App\Rules\RecordExists;
-use App\Models\CollectionField;
-use Illuminate\Validation\Rule;
 use App\Contracts\IndexStrategy;
+use App\Enums\FieldType;
+use App\FieldOptions\DatetimeFieldOption;
+use App\FieldOptions\EmailFieldOption;
+use App\FieldOptions\FileFieldOption;
+use App\FieldOptions\NumberFieldOption;
+use App\FieldOptions\RelationFieldOption;
+use App\FieldOptions\TextFieldOption;
+use App\Helper;
+use App\Models\Collection;
+use App\Models\CollectionField;
 use App\Rules\AllowedEmailDomains;
 use App\Rules\BlockedEmailDomains;
-use App\FieldOptions\FileFieldOption;
-use App\FieldOptions\TextFieldOption;
-use App\FieldOptions\EmailFieldOption;
-use App\FieldOptions\NumberFieldOption;
-use App\FieldOptions\DatetimeFieldOption;
-use App\FieldOptions\RelationFieldOption;
+use App\Rules\RecordExists;
+use Illuminate\Validation\Rule;
+use LogicException;
 
 class RecordRulesCompiler
 {
@@ -31,24 +31,28 @@ class RecordRulesCompiler
     public function forCollection(Collection $collection): self
     {
         $this->collection = $collection;
+
         return $this;
     }
 
     public function using(IndexStrategy $strategy): self
     {
         $this->indexStrategy = $strategy;
+
         return $this;
     }
 
     public function ignoreId(?string $id): self
     {
         $this->ignoreId = $id;
+
         return $this;
     }
 
     public function withForm(array $form): self
     {
         $this->form = $form;
+
         return $this;
     }
 
@@ -67,11 +71,11 @@ class RecordRulesCompiler
 
     protected function assertReady(): void
     {
-        if (!isset($this->collection)) {
+        if (! isset($this->collection)) {
             throw new LogicException('Collection not set');
         }
 
-        if (!isset($this->indexStrategy)) {
+        if (! isset($this->indexStrategy)) {
             throw new LogicException('Index strategy not set');
         }
     }
@@ -101,10 +105,10 @@ class RecordRulesCompiler
             if (isset($fieldRules['*'])) {
                 $nestedRules = $fieldRules['*'];
                 unset($fieldRules['*']);
-                $rules[$prefix . $field->name] = $fieldRules;
-                $rules[$prefix . $field->name . '.*'] = $nestedRules;
+                $rules[$prefix.$field->name] = $fieldRules;
+                $rules[$prefix.$field->name.'.*'] = $nestedRules;
             } else {
-                $rules[$prefix . $field->name] = $fieldRules;
+                $rules[$prefix.$field->name] = $fieldRules;
             }
         }
 
@@ -126,7 +130,7 @@ class RecordRulesCompiler
             $fieldRules[] = 'nullable';
         } elseif ($field->required && $this->ignoreId == null) {
             $fieldRules[] = 'required';
-        }else {
+        } else {
             $fieldRules[] = 'nullable';
         }
 
@@ -214,11 +218,11 @@ class RecordRulesCompiler
                 break;
 
             case $options instanceof EmailFieldOption:
-                if ($options->allowedDomains !== null && !empty($options->allowedDomains)) {
+                if ($options->allowedDomains !== null && ! empty($options->allowedDomains)) {
                     $rules[] = 'email:rfc,dns,filter';
                     $rules[] = new AllowedEmailDomains($options->allowedDomains);
                 }
-                if ($options->blockedDomains !== null && !empty($options->blockedDomains)) {
+                if ($options->blockedDomains !== null && ! empty($options->blockedDomains)) {
                     $rules[] = new BlockedEmailDomains($options->blockedDomains);
                 }
                 break;
@@ -230,7 +234,7 @@ class RecordRulesCompiler
                 if ($options->max !== null) {
                     $rules[] = "max:{$options->max}";
                 }
-                if (!$options->allowDecimals) {
+                if (! $options->allowDecimals) {
                     $rules[] = 'integer';
                 }
                 break;
@@ -245,7 +249,7 @@ class RecordRulesCompiler
                 break;
 
             case $options instanceof FileFieldOption:
-                if ($options->allowedMimeTypes !== null && !empty($options->allowedMimeTypes)) {
+                if ($options->allowedMimeTypes !== null && ! empty($options->allowedMimeTypes)) {
                     $mimes = implode(',', $options->allowedMimeTypes);
                     $rules[] = "mimetypes:{$mimes}";
                 }
@@ -262,20 +266,20 @@ class RecordRulesCompiler
 
             case $options instanceof RelationFieldOption:
                 $rules[] = 'array';
-                
+
                 if ($options->minSelect !== null) {
                     $rules[] = "min:{$options->minSelect}";
                 }
-                
+
                 if ($options->maxSelect !== null) {
                     $rules[] = "max:{$options->maxSelect}";
-                } elseif (!$options->multiple) {
+                } elseif (! $options->multiple) {
                     $rules[] = 'max:1';
                 }
-                
+
                 if ($options->collection !== null) {
                     $rules['*'] = [
-                        new RecordExists($options->collection)
+                        new RecordExists($options->collection),
                     ];
                 }
                 break;

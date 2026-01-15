@@ -2,21 +2,22 @@
 
 namespace App\Rules;
 
-use DB;
-use Closure;
 use App\Helper;
 use App\Models\Collection;
+use Closure;
+use DB;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 class RecordExists implements ValidationRule
 {
     protected ?Collection $collection = null;
+
     protected bool $isIdIndexed = false;
 
     public function __construct(string $collectionId)
     {
         $this->collection = Collection::find($collectionId);
-        
+
         if ($this->collection) {
             $this->isIdIndexed = $this->collection->indexes()
                 ->whereJsonContains('field_names', 'id')
@@ -31,19 +32,21 @@ class RecordExists implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!$this->collection) {
+        if (! $this->collection) {
             $fail("The {$attribute} collection does not exist.");
+
             return;
         }
 
-        if (!\is_string($value)) {
+        if (! \is_string($value)) {
             $fail("The {$attribute} must be a valid record ID.");
+
             return;
         }
 
         $exists = $this->checkRecordExists($value);
 
-        if (!$exists) {
+        if (! $exists) {
             $fail("The selected {$attribute} does not exist in {$this->collection->name} collection.");
         }
     }
@@ -53,7 +56,7 @@ class RecordExists implements ValidationRule
         if ($this->isIdIndexed) {
             // Use the fast indexed query
             $virtualCol = Helper::generateVirtualColumnName($this->collection, 'id');
-            
+
             return DB::table('records')
                 ->where('collection_id', $this->collection->id)
                 ->where($virtualCol, $recordId)

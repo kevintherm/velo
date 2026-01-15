@@ -2,12 +2,12 @@
 
 namespace App\Http\Requests;
 
-use Str;
 use App\Helper;
-use App\Services\RecordRulesCompiler;
 use App\Services\EvaluateRuleExpression;
-use Illuminate\Foundation\Http\FormRequest;
 use App\Services\IndexStrategies\MysqlIndexStrategy;
+use App\Services\RecordRulesCompiler;
+use Illuminate\Foundation\Http\FormRequest;
+use Str;
 
 class RecordRequest extends FormRequest
 {
@@ -21,7 +21,7 @@ class RecordRequest extends FormRequest
 
         $operation = $this->route()->getActionMethod();
 
-        if (!isset($rules[$operation])) {
+        if (! isset($rules[$operation])) {
             return false;
         }
 
@@ -30,9 +30,9 @@ class RecordRequest extends FormRequest
                 'auth' => $this->user(),
                 'body' => $this->all(),
                 'param' => $this->route()->parameters(),
-                'query' => $this->query()
+                'query' => $this->query(),
             ]),
-            ...$this->only($collection->fields->pluck('name')->toArray())
+            ...$this->only($collection->fields->pluck('name')->toArray()),
         ];
 
         $rule = app(EvaluateRuleExpression::class)->forExpression($rules[$operation])->withContext($context);
@@ -47,8 +47,9 @@ class RecordRequest extends FormRequest
      */
     public function rules(): array
     {
-        if (\in_array($this->route()->getActionMethod(), ['list', 'view', 'delete']))
+        if (\in_array($this->route()->getActionMethod(), ['list', 'view', 'delete'])) {
             return [];
+        }
 
         $rules = app(RecordRulesCompiler::class)
             ->forCollection($this->route()->parameter('collection'))
@@ -69,6 +70,7 @@ class RecordRequest extends FormRequest
             if (str_ends_with($ruleName, '.*')) {
                 $index = Str::between($ruleName, 'fields.', '.options');
                 $attributes[$ruleName] = "value on [{$index}]";
+
                 continue;
             }
 

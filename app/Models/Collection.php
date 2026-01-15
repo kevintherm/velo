@@ -3,9 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CollectionType;
-use App\Casts\ApiRulesCast;
 use App\Services\RecordQueryCompiler;
-use Illuminate\Database\Eloquent\Casts\AsCollection;
 use Illuminate\Database\Eloquent\Model;
 
 class Collection extends Model
@@ -51,11 +49,11 @@ class Collection extends Model
     public static function getDefaultApiRules()
     {
         return [
-            'list' => "SUPERUSER_ONLY",
-            'view' => "SUPERUSER_ONLY",
-            'create' => "SUPERUSER_ONLY",
-            'update' => "SUPERUSER_ONLY",
-            'delete' => "SUPERUSER_ONLY",
+            'list' => 'SUPERUSER_ONLY',
+            'view' => 'SUPERUSER_ONLY',
+            'create' => 'SUPERUSER_ONLY',
+            'update' => 'SUPERUSER_ONLY',
+            'delete' => 'SUPERUSER_ONLY',
         ];
     }
 
@@ -65,18 +63,18 @@ class Collection extends Model
             'auth_methods' => [
                 'standard' => [
                     'enabled' => true,
-                    'fields' => ['email']
+                    'fields' => ['email'],
                 ],
                 'oauth2' => [
                     'enabled' => false,
                     'providers' => [],
-                    'config' => []
+                    'config' => [],
                 ],
                 'otp' => [
                     'enabled' => false,
                     'config' => [
                         'duration_s' => 180,
-                        'generate_password_length' => 8
+                        'generate_password_length' => 8,
                     ],
                 ],
             ],
@@ -91,26 +89,26 @@ class Collection extends Model
                 'tokens_options' => [
                     'auth_duration' => [
                         'value' => '1209600',
-                        'invalidate_previous_tokens' => false
+                        'invalidate_previous_tokens' => false,
                     ],
                     'email_verification' => [
                         'value' => '604800',
-                        'invalidate_previous_tokens' => false
+                        'invalidate_previous_tokens' => false,
                     ],
                     'password_reset_duration' => [
                         'value' => '1800',
-                        'invalidate_previous_tokens' => false
+                        'invalidate_previous_tokens' => false,
                     ],
                     'email_change_duration' => [
                         'value' => '1800',
-                        'invalidate_previous_tokens' => false
+                        'invalidate_previous_tokens' => false,
                     ],
                     'protected_file_access_duration' => [
                         'value' => '120',
-                        'invalidate_previous_tokens' => false
+                        'invalidate_previous_tokens' => false,
                     ],
-                ]
-            ]
+                ],
+            ],
         ];
     }
 

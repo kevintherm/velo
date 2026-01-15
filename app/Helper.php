@@ -51,7 +51,7 @@ class Helper
         }
 
         $user = User::create([
-            'name' => 'superuser_' . Str::random(8),
+            'name' => 'superuser_'.Str::random(8),
             'email' => $superuserEmail,
             'password' => $superuserPassword,
         ]);

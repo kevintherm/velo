@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use App\Helper;
-use App\Enums\FieldType;
-use App\Enums\CollectionType;
 use App\Casts\FieldOptionCast;
+use App\Enums\CollectionType;
+use App\Enums\FieldType;
+use App\Helper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -18,7 +18,7 @@ class CollectionField extends Model
         return [
             'type' => FieldType::class,
             'options' => FieldOptionCast::class,
-            'relation_options' => 'array'
+            'relation_options' => 'array',
         ];
     }
 

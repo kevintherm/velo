@@ -9,8 +9,8 @@ class RelationFieldOption implements CollectionFieldOption
 {
     public function __construct(
         public string $collection,
-        public bool $cascadeDelete = false,
-        public bool $multiple = false,
+        public bool $cascadeDelete,
+        public bool $multiple,
         public int|string|null $minSelect,
         public int|string|null $maxSelect,
     ) {}
@@ -45,7 +45,7 @@ class RelationFieldOption implements CollectionFieldOption
     public function getValidationRules(): array
     {
         return [
-            'collection' => 'required|string|in:' . Collection::pluck('id')->implode(','),
+            'collection' => 'required|string|in:'.Collection::pluck('id')->implode(','),
             'multiple' => 'boolean',
             'cascadeDelete' => 'boolean',
             'minSelect' => ['nullable', 'integer'],

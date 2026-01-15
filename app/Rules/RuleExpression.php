@@ -7,16 +7,16 @@ use Exception;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 use Symfony\Component\ExpressionLanguage\SyntaxError;
-use Symfony\Component\ExpressionLanguage\Parser;
 
 class RuleExpression implements ValidationRule
 {
     private $el;
+
     private array $varNames = [];
 
     public function __construct(?array $varNames)
     {
-        $this->el = new ExpressionLanguage();
+        $this->el = new ExpressionLanguage;
         $this->varNames = $varNames ?? [];
     }
 
@@ -28,7 +28,9 @@ class RuleExpression implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         try {
-            if (!\is_string($value)) $fail('Rule must be a string.');
+            if (! \is_string($value)) {
+                $fail('Rule must be a string.');
+            }
 
             $rawRule = $value;
             $normalized = str_replace(['@', '='], ['sys_', '=='], $rawRule);
@@ -38,7 +40,7 @@ class RuleExpression implements ValidationRule
             $msg = str_replace(['sys_', '=='], ['@', '='], $e->getMessage());
             $fail($msg);
         } catch (Exception $e) {
-            $fail("Something went wrong when parsing rule. Try again later.");
+            $fail('Something went wrong when parsing rule. Try again later.');
         }
     }
 
