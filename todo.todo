@@ -1,4 +1,5 @@
 BUG:
+- api rule for list apply to filter
 - collection page toggle fields visibility doesn't work
 
 IMPROVEMENT:

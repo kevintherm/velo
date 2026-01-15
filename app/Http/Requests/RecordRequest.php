@@ -21,22 +21,34 @@ class RecordRequest extends FormRequest
 
         $operation = $this->route()->getActionMethod();
 
-        if (! isset($rules[$operation])) {
+        if (!isset($rules[$operation])) {
             return false;
         }
 
+        $recordId = $this->route()->parameter('recordId');
+        $record = null;
+
+        if ($recordId) {
+            $record = $collection->recordQueryCompiler()
+                ->filter('id', '=', $recordId)
+                ->first();
+        }
+
+        $fields = $collection->fields->pluck('name')->toArray();
+        $recordData = $record ? $record->data->toArray() : array_fill_keys($fields, null);
+
         $context = [
             'sys_request' => Helper::toObject([
-                'auth' => $this->user(),
-                'body' => $this->all(),
+                'auth' => $this->auth,
+                'body' => $this->post(),
                 'param' => $this->route()->parameters(),
                 'query' => $this->query(),
             ]),
-            ...$this->only($collection->fields->pluck('name')->toArray()),
+            ...$recordData,
+            ...$this->only($fields),
         ];
 
         $rule = app(EvaluateRuleExpression::class)->forExpression($rules[$operation])->withContext($context);
-
         return $rule->evaluate();
     }
 

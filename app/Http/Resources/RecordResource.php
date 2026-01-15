@@ -17,7 +17,7 @@ class RecordResource extends JsonResource
             }
             $arr[$field->name] = $this->data[$field->name] ?? null;
             if ($request->has('expand')) {
-                $arr['expand'] = $this->data['expand'];
+                $arr['expand'] = $this->data['expand'] ?? [];
             }
         }
 

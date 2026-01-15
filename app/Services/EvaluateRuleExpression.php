@@ -13,7 +13,8 @@ class EvaluateRuleExpression
 
     public function __construct(
         protected ExpressionLanguage $expressionLanguage
-    ) {}
+    ) {
+    }
 
     public function forExpression(string $expression)
     {
