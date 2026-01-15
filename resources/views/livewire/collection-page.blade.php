@@ -317,7 +317,7 @@
                                     @if(!empty($selectedIds) && $relatedCollection)
                                         @foreach($selectedIds as $recordId)
                                             @php
-                                                $record = $relatedCollection->recordQueryCompiler()->filter('id', '=', $recordId)->firstRaw();
+                                                $record = $relatedCollection->records()->filter('id', '=', $recordId)->firstRaw();
                                             @endphp
                                             @if($record)
                                                 <div class="badge badge-soft badge-sm flex items-center gap-2 py-3.5">

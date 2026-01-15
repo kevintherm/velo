@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\RecordRequest;
-use App\Http\Resources\RecordResource;
 use App\Models\Collection;
 use Illuminate\Http\JsonResponse;
+use App\Http\Requests\RecordRequest;
+use App\Http\Resources\RecordResource;
 use Illuminate\Support\Facades\Response;
 
 class RecordController extends Controller
@@ -18,7 +18,7 @@ class RecordController extends Controller
         $sort = $request->input('sort', '');
         $expand = $request->input('expand', '');
 
-        $records = $collection->recordQueryCompiler()
+        $records = $collection->records()
             ->filterFromString($filter)
             ->sortFromString($sort)
             ->expandFromString($expand)
@@ -31,7 +31,7 @@ class RecordController extends Controller
     {
         $expand = $request->input('expand', '');
 
-        $record = $collection->recordQueryCompiler()
+        $record = $collection->records()
             ->filter('id', '=', $recordId)
             ->expandFromString($expand)
             ->firstOrFail();
@@ -43,7 +43,7 @@ class RecordController extends Controller
 
     public function create(RecordRequest $request, Collection $collection)
     {
-        $record = $collection->records()->create(['data' => $request->validated()]);
+        $record = $collection->recordRelation()->create(['data' => $request->validated()]);
         $resource = new RecordResource($record);
 
         return $resource->response();
@@ -51,7 +51,7 @@ class RecordController extends Controller
 
     public function update(RecordRequest $request, Collection $collection, string $recordId): JsonResponse
     {
-        $record = $collection->recordQueryCompiler()->filter('id', '=', $recordId)->firstRawOrFail();
+        $record = $collection->records()->filter('id', '=', $recordId)->firstRawOrFail();
 
         $record->update([
             'data' => [...$record->data->toArray(), ...$request->validated()],
@@ -64,7 +64,7 @@ class RecordController extends Controller
 
     public function delete(RecordRequest $request, Collection $collection, string $recordId): JsonResponse
     {
-        $record = $collection->recordQueryCompiler()->filter('id', '=', $recordId)->firstRawOrFail();
+        $record = $collection->records()->filter('id', '=', $recordId)->firstRawOrFail();
         $record->delete();
 
         return Response::json([], 204);

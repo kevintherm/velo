@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AuthSession;
-use App\Models\Collection;
 use Hash;
+use Response;
+use App\Models\Collection;
+use App\Models\AuthSession;
 use Illuminate\Http\Request;
 use App\Enums\CollectionType;
-use App\Services\RecordQueryCompiler;
+use App\Services\RecordQuery;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Response;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 class AuthController extends Controller
@@ -41,8 +41,8 @@ class AuthController extends Controller
 
         $identifierValue = $request->input('identifier');
         $conditions = array_map(fn($field) => ['field' => $field, 'value' => $identifierValue], $identifiers);
-        $filterString = RecordQueryCompiler::buildSaveFilterString($conditions, 'OR');
-        $record = $collection->recordQueryCompiler()->filterFromString($filterString)->first();
+        $filterString = RecordQuery::buildFilterString($conditions, 'OR');
+        $record = $collection->records()->filterFromString($filterString)->first();
 
         if (!$record)
             throw ValidationException::withMessages([

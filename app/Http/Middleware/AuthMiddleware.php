@@ -7,7 +7,7 @@ use Closure;
 use App\Models\Record;
 use App\Models\AuthSession;
 use Illuminate\Http\Request;
-use App\Services\RecordQueryCompiler;
+use App\Services\RecordQuery;
 use Illuminate\Validation\UnauthorizedException;
 use Symfony\Component\HttpFoundation\Response;
 

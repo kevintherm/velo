@@ -76,14 +76,20 @@ class BaseCollectionHandler implements CollectionTypeHandler
             }
 
             if ($field->options?->multiple) {
-                foreach ($value as $val) {
+                foreach ((array) $value as $val) {
                     $indexToInsert[] = $this->makeRecordIndexData($record, $field, $val);
                 }
 
                 continue;
             }
 
-            $indexToInsert[] = $this->makeRecordIndexData($record, $field, $value);
+            $singleValue = is_array($value) ? ($value[0] ?? null) : $value;
+            
+            if ($singleValue === null || $singleValue === '') {
+                continue;
+            }
+
+            $indexToInsert[] = $this->makeRecordIndexData($record, $field, $singleValue);
         }
 
         RecordIndex::insert($indexToInsert);

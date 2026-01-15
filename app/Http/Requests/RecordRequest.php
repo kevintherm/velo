@@ -29,7 +29,7 @@ class RecordRequest extends FormRequest
         $record = null;
 
         if ($recordId) {
-            $record = $collection->recordQueryCompiler()
+            $record = $collection->records()
                 ->filter('id', '=', $recordId)
                 ->first();
         }

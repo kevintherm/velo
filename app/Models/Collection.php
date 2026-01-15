@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CollectionType;
-use App\Services\RecordQueryCompiler;
+use App\Services\RecordQuery;
 use Illuminate\Database\Eloquent\Model;
 
 class Collection extends Model
@@ -28,6 +28,11 @@ class Collection extends Model
 
     public function records()
     {
+        return new RecordQuery($this);
+    }
+
+    public function recordRelation()
+    {
         return $this->hasMany(Record::class);
     }
 
@@ -41,10 +46,6 @@ class Collection extends Model
         return $this->hasMany(RecordIndex::class, 'collection_id');
     }
 
-    public function recordQueryCompiler()
-    {
-        return new RecordQueryCompiler($this);
-    }
 
     public static function getDefaultApiRules()
     {
