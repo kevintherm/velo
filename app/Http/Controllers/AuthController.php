@@ -62,6 +62,30 @@ class AuthController extends Controller
             ]);
         }
 
+        // Apply authenticate API rule
+        $authenticateRule = $collection->api_rules['authenticate'] ?? '';
+        if ($authenticateRule !== '') {
+            $context = [
+                'sys_request' => \App\Helper::toObject([
+                    'auth' => null, // Not authenticated yet
+                    'body' => $request->post(),
+                    'param' => $request->route()->parameters(),
+                    'query' => $request->query(),
+                ]),
+                ...$record->data->toArray(),
+            ];
+
+            $rule = app(\App\Services\EvaluateRuleExpression::class)
+                ->forExpression($authenticateRule)
+                ->withContext($context);
+
+            if (!$rule->evaluate()) {
+                throw ValidationException::withMessages([
+                    'identifier' => 'Authentication failed due to collection rules.',
+                ]);
+            }
+        }
+
         [$token, $hashed] = AuthSession::generateToken();
 
         AuthSession::create([

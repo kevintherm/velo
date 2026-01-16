@@ -22,7 +22,7 @@ Route::prefix('collections/{collection:name}')->group(function () {
         Route::get('/{recordId}', [RecordController::class, 'view'])->name('view');
         Route::post('/', [RecordController::class, 'create'])->name('create');
         Route::put('/{recordId}', [RecordController::class, 'update'])->name('update');
-        Route::delete('/{record}', [RecordController::class, 'delete'])->name('delete');
+        Route::delete('/{recordId}', [RecordController::class, 'delete'])->name('delete');
     });
 
 });

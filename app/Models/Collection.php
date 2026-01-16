@@ -121,12 +121,13 @@ class Collection extends Model
 
             if ($collection->api_rules == null && $collection->type === CollectionType::Auth) {
                 $collection->api_rules = [
-                    ...static::getDefaultApiRules(),
                     'authenticate' => '',
                     'manage' => 'SUPERUSER_ONLY',
                     'list' => '@request.auth.id = id',
                     'view' => '@request.auth.id = id',
+                    'create' => '',
                     'update' => '@request.auth.id = id',
+                    'delete' => 'SUPERUSER_ONLY',
                 ];
             }
 
