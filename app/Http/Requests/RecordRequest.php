@@ -21,7 +21,7 @@ class RecordRequest extends FormRequest
 
         $operation = $this->route()->getActionMethod();
 
-        if (!isset($rules[$operation])) {
+        if (! isset($rules[$operation])) {
             return false;
         }
 
@@ -55,6 +55,7 @@ class RecordRequest extends FormRequest
         ];
 
         $rule = app(EvaluateRuleExpression::class)->forExpression($rules[$operation])->withContext($context);
+
         return $rule->evaluate();
     }
 

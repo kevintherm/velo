@@ -28,7 +28,7 @@ class RuleExpression implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         try {
-            if (!\is_string($value)) {
+            if (! \is_string($value)) {
                 $fail('Rule must be a string.');
             }
 
@@ -46,20 +46,24 @@ class RuleExpression implements ValidationRule
             // Check these first before the operator check
             if (preg_match('/^[\d\.\-]+$/', $rawRule)) { // plain number like 0, 1, 123, -1.5
                 $fail('Rule must be an expression with field and operator (e.g., "field = value").');
+
                 return;
             }
             if (preg_match('/^"[^"]*"$/', $rawRule)) { // just a quoted string like "0", "foo"
                 $fail('Rule must be an expression with field and operator (e.g., "field = value").');
+
                 return;
             }
             if (preg_match('/^\'[^\']*\'$/', $rawRule)) { // just a single-quoted string
                 $fail('Rule must be an expression with field and operator (e.g., "field = value").');
+
                 return;
             }
 
             // Rule must contain at least one comparison operator
-            if (!preg_match('/(=|!=|>=|<=|>|<|LIKE)/i', $rawRule)) {
+            if (! preg_match('/(=|!=|>=|<=|>|<|LIKE)/i', $rawRule)) {
                 $fail('Rule must be an expression with field and operator (e.g., "field = value").');
+
                 return;
             }
 

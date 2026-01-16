@@ -17,15 +17,15 @@ class BaseCollectionHandler implements CollectionTypeHandler
         $fields = $record->collection->fields->keyBy('name');
         $data = $record->data;
 
-        if (!$record->exists && $fields->has('created')) {
-            if (!$data->has('created') || !filled($data->get('created'))) {
+        if (! $record->exists && $fields->has('created')) {
+            if (! $data->has('created') || ! filled($data->get('created'))) {
                 $data->put('created', now()->toIso8601String());
             }
         }
 
-        $textPatternFields = $fields->filter(fn($field) => $field->type === FieldType::Text && !empty($field->options->autoGeneratePattern ?? null));
+        $textPatternFields = $fields->filter(fn ($field) => $field->type === FieldType::Text && ! empty($field->options->autoGeneratePattern ?? null));
         foreach ($textPatternFields as $field) {
-            if (!filled($data->get($field->name))) {
+            if (! filled($data->get($field->name))) {
                 $data->put($field->name, fake(config('app.locale'))->regexify($field->options->autoGeneratePattern));
             }
         }
@@ -84,7 +84,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
             }
 
             $singleValue = is_array($value) ? ($value[0] ?? null) : $value;
-            
+
             if ($singleValue === null || $singleValue === '') {
                 continue;
             }
@@ -131,7 +131,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
             ->get();
 
         // Group by collection_id and field to check cascadeDelete options
-        $groupedByField = $referencingIndexes->groupBy(fn($index) => $index->collection_id . '.' . $index->field);
+        $groupedByField = $referencingIndexes->groupBy(fn ($index) => $index->collection_id.'.'.$index->field);
 
         foreach ($groupedByField as $key => $indexes) {
             $firstIndex = $indexes->first();
@@ -141,12 +141,12 @@ class BaseCollectionHandler implements CollectionTypeHandler
                 ->where('name', $firstIndex->field)
                 ->first();
 
-            if (!$field) {
+            if (! $field) {
                 continue;
             }
 
             // If cascadeDelete is false, throw an exception
-            if (!$field->options?->cascadeDelete) {
+            if (! $field->options?->cascadeDelete) {
                 throw new InvalidRecordException(
                     "Cannot delete record: it is referenced by {$indexes->count()} record(s) in field '{$field->name}' of collection '{$field->collection->name}'."
                 );

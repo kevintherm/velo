@@ -46,7 +46,6 @@ class Collection extends Model
         return $this->hasMany(RecordIndex::class, 'collection_id');
     }
 
-
     public static function getDefaultApiRules()
     {
         return [

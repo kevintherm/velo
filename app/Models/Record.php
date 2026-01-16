@@ -38,14 +38,14 @@ class Record extends Model
     protected static function booted(): void
     {
         static::saving(function (Record $record) {
-            if (!$record->relationLoaded('collection')) {
+            if (! $record->relationLoaded('collection')) {
                 $record->load('collection.fields');
             }
 
             $fields = $record->collection->fields->keyBy('name');
             $fieldNames = $fields->keys()->sort()->values()->toArray();
 
-            if (!$record->data->has('id') || empty($record->data->get('id'))) {
+            if (! $record->data->has('id') || empty($record->data->get('id'))) {
                 $min = $fields['id']->options->minLength ?? 16;
                 $max = $fields['id']->options->maxLength ?? 16;
                 $length = random_int($min, $max);
@@ -68,7 +68,7 @@ class Record extends Model
                     : $originalData;
 
                 foreach ($fieldNames as $fieldName) {
-                    if (!$record->data->has($fieldName) && isset($originalData[$fieldName])) {
+                    if (! $record->data->has($fieldName) && isset($originalData[$fieldName])) {
                         $record->data->put($fieldName, $originalData[$fieldName]);
                     }
                 }
@@ -90,8 +90,8 @@ class Record extends Model
             $dataKeys = $record->data->keys()->sort()->values()->toArray();
             $missingFields = array_diff($fieldNames, $dataKeys);
 
-            if (!empty($missingFields)) {
-                throw new InvalidRecordException('Record structure mismatch. Missing required fields: ' . implode(', ', $missingFields) . '. Expected all fields: ' . implode(', ', $fieldNames));
+            if (! empty($missingFields)) {
+                throw new InvalidRecordException('Record structure mismatch. Missing required fields: '.implode(', ', $missingFields).'. Expected all fields: '.implode(', ', $fieldNames));
             }
         });
 

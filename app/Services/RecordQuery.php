@@ -34,8 +34,8 @@ class RecordQuery
 
     /**
      * Create a new RecordQuery instance.
-     * 
-     * @param Collection|int|string $collection Collection instance or collection ID
+     *
+     * @param  Collection|int|string  $collection  Collection instance or collection ID
      */
     public function __construct(Collection|int|string $collection)
     {
@@ -52,8 +52,8 @@ class RecordQuery
 
     /**
      * Static factory method for fluent API.
-     * 
-     * @param Collection|int|string $collection Collection instance or collection ID
+     *
+     * @param  Collection|int|string  $collection  Collection instance or collection ID
      */
     public static function for(Collection|int|string $collection): self
     {
@@ -65,7 +65,7 @@ class RecordQuery
      */
     protected function getCollection(): Collection
     {
-        if (!($this->collection instanceof Collection)) {
+        if (! ($this->collection instanceof Collection)) {
             $this->collection = Collection::findOrFail($this->collectionId);
         }
 
@@ -294,7 +294,7 @@ class RecordQuery
     {
         $result = $this->first();
 
-        if (!$result) {
+        if (! $result) {
             throw new ModelNotFoundException('Resource not found.');
         }
 
@@ -362,7 +362,7 @@ class RecordQuery
             ->offset(($currentPage - 1) * $this->perPage)
             ->limit($this->perPage)
             ->get()
-            ->map(fn($d) => json_decode($d->data));
+            ->map(fn ($d) => json_decode($d->data));
 
         return new LengthAwarePaginator(
             $results,
@@ -426,7 +426,7 @@ class RecordQuery
             }
 
             $field = preg_replace('/[^a-zA-Z0-9_]/', '', $field);
-            $escapedValue = '"' . str_replace('"', '\\"', $value) . '"';
+            $escapedValue = '"'.str_replace('"', '\\"', $value).'"';
             $parts[] = "$field $operator $escapedValue";
         }
 
@@ -452,9 +452,10 @@ class RecordQuery
 
                 if ($f['operator'] === 'IN') {
                     if (empty($f['value'])) {
-                        if (!$isOr) {
+                        if (! $isOr) {
                             $q->whereRaw('1 = 0');
                         }
+
                         continue;
                     }
 
@@ -463,7 +464,7 @@ class RecordQuery
                         $q->$method($virtualCol, $f['value']);
                     } else {
                         $placeholders = implode(',', array_fill(0, count($f['value']), '?'));
-                        $rawSql = "JSON_UNQUOTE(JSON_EXTRACT(data, '$.\"" . $f['field'] . "\"')) IN ($placeholders)";
+                        $rawSql = "JSON_UNQUOTE(JSON_EXTRACT(data, '$.\"".$f['field']."\"')) IN ($placeholders)";
 
                         if ($isOr) {
                             $q->orWhereRaw($rawSql, $f['value']);
@@ -471,16 +472,18 @@ class RecordQuery
                             $q->whereRaw($rawSql, $f['value']);
                         }
                     }
+
                     continue;
                 }
 
                 if ($isIndexed) {
                     $method = $isOr ? 'orWhere' : 'where';
                     $q->$method($virtualCol, $f['operator'], $f['value']);
+
                     continue;
                 }
 
-                $rawSql = "JSON_UNQUOTE(JSON_EXTRACT(data, '$.\"" . $f['field'] . "\"')) {$f['operator']} ?";
+                $rawSql = "JSON_UNQUOTE(JSON_EXTRACT(data, '$.\"".$f['field']."\"')) {$f['operator']} ?";
                 if ($isOr) {
                     $q->orWhereRaw($rawSql, [$f['value']]);
                 } else {
@@ -493,10 +496,11 @@ class RecordQuery
             $virtualCol = \App\Helper::generateVirtualColumnName($this->getCollection(), $s['field']);
             if ($this->isFieldIndexed($s['field'])) {
                 $query->orderBy($virtualCol, $s['direction']);
+
                 continue;
             }
 
-            $query->orderByRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.\"" . $s['field'] . "\"')) {$s['direction']}");
+            $query->orderByRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.\"".$s['field']."\"')) {$s['direction']}");
         }
 
         return $query;
@@ -508,8 +512,8 @@ class RecordQuery
 
         foreach ($allowedOperators as $op) {
             $pattern = ($op === 'LIKE')
-                ? '/\s+' . preg_quote($op, '/') . '\s+/i'
-                : '/' . preg_quote($op, '/') . '/';
+                ? '/\s+'.preg_quote($op, '/').'\s+/i'
+                : '/'.preg_quote($op, '/').'/';
 
             if (preg_match($pattern, $segment, $matches, PREG_OFFSET_CAPTURE)) {
                 $operatorPosition = $matches[0][1];
@@ -586,7 +590,7 @@ class RecordQuery
             ->keyBy('name');
 
         foreach ($this->expands as $fieldName) {
-            if (!$relationFields->has($fieldName)) {
+            if (! $relationFields->has($fieldName)) {
                 continue;
             }
 
@@ -603,7 +607,7 @@ class RecordQuery
             }
 
             $relatedCollection = Collection::find($relationField->options?->collection);
-            if (!$relatedCollection) {
+            if (! $relatedCollection) {
                 continue;
             }
 
@@ -619,7 +623,7 @@ class RecordQuery
 
             if ($relationField->options?->multiple) {
                 $expand[$relationField->name] = $idsFromRelation
-                    ->map(fn($id) => $expandedRecords->get($id))
+                    ->map(fn ($id) => $expandedRecords->get($id))
                     ->filter()
                     ->values();
             } else {
@@ -645,7 +649,7 @@ class RecordQuery
             ->keyBy('name');
 
         foreach ($this->expands as $fieldName) {
-            if (!$relationFields->has($fieldName)) {
+            if (! $relationFields->has($fieldName)) {
                 continue;
             }
 
@@ -664,7 +668,7 @@ class RecordQuery
             }
 
             $relatedCollection = Collection::find($relationField->options?->collection);
-            if (!$relatedCollection) {
+            if (! $relatedCollection) {
                 continue;
             }
 
@@ -681,7 +685,7 @@ class RecordQuery
 
                 if ($relationField->options?->multiple) {
                     $expand[$relationField->name] = $idsFromRelation
-                        ->map(fn($id) => $expandedRecords->get($id))
+                        ->map(fn ($id) => $expandedRecords->get($id))
                         ->filter()
                         ->values();
                 } else {

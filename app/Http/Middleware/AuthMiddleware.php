@@ -2,13 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use App\Exceptions\UnauthenticatedException;
-use Closure;
-use App\Models\Record;
 use App\Models\AuthSession;
+use App\Models\Record;
+use Closure;
 use Illuminate\Http\Request;
-use App\Services\RecordQuery;
-use Illuminate\Validation\UnauthorizedException;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuthMiddleware
@@ -25,7 +22,7 @@ class AuthMiddleware
 
         $session = AuthSession::where('token_hash', $hash)->where('expires_at', '>', now())->first();
 
-        if (!$token || !$session) {
+        if (! $token || ! $session) {
             $request->attributes->set('auth', collect([
                 'id' => null,
                 'name' => null,
@@ -34,7 +31,7 @@ class AuthMiddleware
                     '_id' => null,
                     'collection_id' => null,
                     'project_id' => null,
-                ])
+                ]),
             ]));
 
             return $next($request);
@@ -42,7 +39,7 @@ class AuthMiddleware
 
         $record = Record::find($session->record_id);
 
-        if (!$record) {
+        if (! $record) {
             $session->delete();
             $request->attributes->set('auth', collect([
                 'id' => null,
@@ -52,7 +49,7 @@ class AuthMiddleware
                     '_id' => null,
                     'collection_id' => null,
                     'project_id' => null,
-                ])
+                ]),
             ]));
 
             return $next($request);
@@ -65,8 +62,8 @@ class AuthMiddleware
                     '_id' => $session->record_id,
                     'collection_id' => $session->collection_id,
                     'project_id' => $session->project_id,
-                ])
-            ])
+                ]),
+            ]),
         ]);
 
         $session->update(['last_used_at' => now()]);

@@ -13,8 +13,7 @@ class EvaluateRuleExpression
 
     public function __construct(
         protected ExpressionLanguage $expressionLanguage
-    ) {
-    }
+    ) {}
 
     public function forExpression(string $expression)
     {
@@ -62,10 +61,11 @@ class EvaluateRuleExpression
             $parts = explode('.', $path);
 
             // Navigate through context using dot notation
-            $value = $this->context['sys_' . $parts[0]] ?? null;
+            $value = $this->context['sys_'.$parts[0]] ?? null;
             for ($i = 1; $i < count($parts); $i++) {
-                if ($value === null)
+                if ($value === null) {
                     break;
+                }
                 if (is_object($value)) {
                     $value = $value->{$parts[$i]} ?? null;
                 } elseif (is_array($value)) {
@@ -79,7 +79,8 @@ class EvaluateRuleExpression
             if ($value === null) {
                 return '""';
             }
-            return '"' . str_replace('"', '\\"', (string) $value) . '"';
+
+            return '"'.str_replace('"', '\\"', (string) $value).'"';
         }, $result);
 
         // Flip expressions where quoted value is on the left side (e.g., "val" = field -> field = "val")
@@ -90,6 +91,7 @@ class EvaluateRuleExpression
                 $value = $matches[1];
                 $operator = $matches[2];
                 $field = $matches[3];
+
                 return "$field $operator $value";
             },
             $result

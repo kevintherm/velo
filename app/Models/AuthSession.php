@@ -13,6 +13,7 @@ class AuthSession extends Model
     {
         $plainToken = Str::random(64);
         $hashed = hash('sha256', $plainToken);
+
         return [$plainToken, $hashed];
     }
 }

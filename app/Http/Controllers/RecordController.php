@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RecordRequest;
+use App\Http\Resources\RecordResource;
 use App\Models\Collection;
 use App\Services\EvaluateRuleExpression;
 use Illuminate\Http\JsonResponse;
-use App\Http\Requests\RecordRequest;
-use App\Http\Resources\RecordResource;
 use Illuminate\Support\Facades\Response;
 
 class RecordController extends Controller
@@ -21,7 +21,7 @@ class RecordController extends Controller
 
         // Apply list API rule as additional filter (interpolate @variables with actual values)
         $listRule = $collection->api_rules['list'] ?? '';
-        if (!empty($listRule)) {
+        if (! empty($listRule)) {
             $context = [
                 'sys_request' => (object) [
                     'auth' => $request->auth,
@@ -36,9 +36,9 @@ class RecordController extends Controller
         }
 
         $records = $collection->records()
-            ->filterFromString($filter)
-            ->sortFromString($sort)
-            ->expandFromString($expand)
+            ->filterFromString($filter ?? '')
+            ->sortFromString($sort ?? '')
+            ->expandFromString($expand ?? '')
             ->simplePaginate($perPage, $page);
 
         return RecordResource::collection($records)->response();

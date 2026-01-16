@@ -2,59 +2,65 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\RecordResource;
-use App\Models\Record;
-use Hash;
-use Response;
-use App\Models\Collection;
-use App\Models\AuthSession;
-use Illuminate\Http\Request;
 use App\Enums\CollectionType;
+use App\Http\Resources\RecordResource;
+use App\Models\AuthSession;
+use App\Models\Collection;
+use App\Models\Record;
 use App\Services\RecordQuery;
-use Illuminate\Validation\ValidationException;
+use Hash;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Response;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 class AuthController extends Controller
 {
     public function authenticateWithPassword(Request $request, Collection $collection)
     {
-        if ($collection->type !== CollectionType::Auth)
+        if ($collection->type !== CollectionType::Auth) {
             throw new RouteNotFoundException('Collection is not auth enabled.');
+        }
 
-        if (!isset($collection->options['auth_methods']['standard']))
+        if (! isset($collection->options['auth_methods']['standard'])) {
             throw new RouteNotFoundException('Collection is not setup for standard auth method.');
+        }
 
-        if (!$collection->options['auth_methods']['standard']['enabled'])
+        if (! $collection->options['auth_methods']['standard']['enabled']) {
             throw new RouteNotFoundException('Collection is not auth enabled.');
+        }
 
         $identifiers = $collection->options['auth_methods']['standard']['fields'];
 
         $request->validate([
             'identifier' => 'required|string',
-            'password' => 'required|string'
+            'password' => 'required|string',
         ]);
 
         $validFields = $collection->fields()->pluck('name')->toArray();
-        $identifiers = array_filter($identifiers, fn($field) => in_array($field, $validFields));
+        $identifiers = array_filter($identifiers, fn ($field) => in_array($field, $validFields));
 
-        if (empty($identifiers))
+        if (empty($identifiers)) {
             throw new ModelNotFoundException('Collection is not setup for standard auth method.');
+        }
 
         $identifierValue = $request->input('identifier');
-        $conditions = array_map(fn($field) => ['field' => $field, 'value' => $identifierValue], $identifiers);
+        $conditions = array_map(fn ($field) => ['field' => $field, 'value' => $identifierValue], $identifiers);
         $filterString = RecordQuery::buildFilterString($conditions, 'OR');
         $record = $collection->records()->filterFromString($filterString)->first();
 
-        if (!$record)
+        if (! $record) {
             throw ValidationException::withMessages([
-                'identifier' => 'Invalid credentials.'
+                'identifier' => 'Invalid credentials.',
             ]);
+        }
 
-        if (!Hash::check($request->input('password'), $record->data->get('password')))
+        if (! Hash::check($request->input('password'), $record->data->get('password'))) {
             throw ValidationException::withMessages([
-                'identifier' => 'Invalid credentials.'
+                'identifier' => 'Invalid credentials.',
             ]);
+        }
 
         [$token, $hashed] = AuthSession::generateToken();
 
@@ -71,7 +77,7 @@ class AuthController extends Controller
 
         return Response::json([
             'message' => 'Authenticated.',
-            'data' => $token
+            'data' => $token,
         ]);
     }
 
@@ -82,12 +88,12 @@ class AuthController extends Controller
         }
 
         $session = $request->auth;
-        if (!$session || !$session->get('meta')?->get('_id')) {
+        if (! $session || ! $session->get('meta')?->get('_id')) {
             return Response::json(['message' => 'Unauthorized.'], 401);
         }
 
         $record = Record::find($session->get('meta')?->get('_id'));
-        if (!$record) {
+        if (! $record) {
             return Response::json(['message' => 'User not found.'], 404);
         }
 
@@ -103,7 +109,7 @@ class AuthController extends Controller
         }
 
         $session = $request->auth;
-        if (!$session || !$session->get('meta')?->get('_id')) {
+        if (! $session || ! $session->get('meta')?->get('_id')) {
             return Response::json(['message' => 'Unauthorized.'], 401);
         }
 
@@ -121,7 +127,7 @@ class AuthController extends Controller
         }
 
         $session = $request->auth;
-        if (!$session || !$session->get('meta')?->get('_id')) {
+        if (! $session || ! $session->get('meta')?->get('_id')) {
             return Response::json(['message' => 'Unauthorized.'], 401);
         }
 
