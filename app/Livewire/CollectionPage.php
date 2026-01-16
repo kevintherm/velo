@@ -369,11 +369,14 @@ class CollectionPage extends Component
     public function fillFieldsVisibility()
     {
         foreach ($this->fields as $i => $field) {
-            $this->fieldsVisibility[$field->name] = true;
+            // Only initialize if not already set (preserves user toggles)
+            if (!array_key_exists($field->name, $this->fieldsVisibility)) {
+                $this->fieldsVisibility[$field->name] = true;
 
-            if ($this->collection->type === CollectionType::Auth) {
-                if ($field->name === 'password') {
-                    $this->fieldsVisibility['password'] = false;
+                if ($this->collection->type === CollectionType::Auth) {
+                    if ($field->name === 'password') {
+                        $this->fieldsVisibility['password'] = false;
+                    }
                 }
             }
         }

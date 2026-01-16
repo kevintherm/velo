@@ -6,7 +6,7 @@ IMPROVEMENT:
 - fix file type validation
 - refactor file handling
 - add auto generate thumbnail feature for created lifecycle
-- add whereIn record query compiler for efficient filterings
 - upgrade livewire 4 to use island feature
 - make all min n max options accept int|float|string|null
 - ignore all collection validation if _deleted exists
+- request reauthentication when changing identifiers or password for auth type collection

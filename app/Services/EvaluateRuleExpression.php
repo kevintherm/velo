@@ -44,6 +44,61 @@ class EvaluateRuleExpression
     }
 
     /**
+     * Interpolates @variable references with actual values from context.
+     * Useful for converting rules like "@request.auth.id = id" to "id = \"abc123\""
+     * for use in filter strings.
+     */
+    public function interpolate(): string
+    {
+        if ($this->expression === null) {
+            throw new InvalidRuleException('Cannot interpolate a NULL expression.');
+        }
+
+        $result = $this->expression;
+
+        // Find all @variable.path patterns and replace with actual values
+        $result = preg_replace_callback('/@([a-zA-Z_][a-zA-Z0-9_\.]*)/u', function ($matches) {
+            $path = $matches[1];
+            $parts = explode('.', $path);
+
+            // Navigate through context using dot notation
+            $value = $this->context['sys_' . $parts[0]] ?? null;
+            for ($i = 1; $i < count($parts); $i++) {
+                if ($value === null)
+                    break;
+                if (is_object($value)) {
+                    $value = $value->{$parts[$i]} ?? null;
+                } elseif (is_array($value)) {
+                    $value = $value[$parts[$i]] ?? null;
+                } else {
+                    $value = null;
+                }
+            }
+
+            // Return quoted string or empty string if null
+            if ($value === null) {
+                return '""';
+            }
+            return '"' . str_replace('"', '\\"', (string) $value) . '"';
+        }, $result);
+
+        // Flip expressions where quoted value is on the left side (e.g., "val" = field -> field = "val")
+        // RecordQueryCompiler expects: field operator value
+        $result = preg_replace_callback(
+            '/("(?:[^"\\\\]|\\\\.)*")\s*(=|!=|>=|<=|>|<|LIKE)\s*([a-zA-Z_][a-zA-Z0-9_]*)/i',
+            function ($matches) {
+                $value = $matches[1];
+                $operator = $matches[2];
+                $field = $matches[3];
+                return "$field $operator $value";
+            },
+            $result
+        );
+
+        return $result;
+    }
+
+    /**
      * Returns the evaluated result of an expression
      * If the expression is '' an empty string the evaluating result will always be true
      *

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Collection;
+use App\Services\EvaluateRuleExpression;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\RecordRequest;
 use App\Http\Resources\RecordResource;
@@ -17,6 +18,22 @@ class RecordController extends Controller
         $filter = $request->input('filter', '');
         $sort = $request->input('sort', '');
         $expand = $request->input('expand', '');
+
+        // Apply list API rule as additional filter (interpolate @variables with actual values)
+        $listRule = $collection->api_rules['list'] ?? '';
+        if (!empty($listRule)) {
+            $context = [
+                'sys_request' => (object) [
+                    'auth' => $request->auth,
+                ],
+            ];
+            $interpolatedRule = app(EvaluateRuleExpression::class)
+                ->forExpression($listRule)
+                ->withContext($context)
+                ->interpolate();
+
+            $filter = empty($filter) ? $interpolatedRule : "($filter) AND ($interpolatedRule)";
+        }
 
         $records = $collection->records()
             ->filterFromString($filter)

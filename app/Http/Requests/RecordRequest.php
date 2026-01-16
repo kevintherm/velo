@@ -25,6 +25,12 @@ class RecordRequest extends FormRequest
             return false;
         }
 
+        // For list operation, the rule is applied as a filter in the controller
+        // Authorization passes if a rule is defined (even if empty = allow all)
+        if ($operation === 'list') {
+            return true;
+        }
+
         $recordId = $this->route()->parameter('recordId');
         $record = null;
 

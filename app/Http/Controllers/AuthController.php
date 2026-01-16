@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\RecordResource;
+use App\Models\Record;
 use Hash;
 use Response;
 use App\Models\Collection;
@@ -71,5 +73,62 @@ class AuthController extends Controller
             'message' => 'Authenticated.',
             'data' => $token
         ]);
+    }
+
+    public function me(Request $request, Collection $collection)
+    {
+        if ($collection->type !== CollectionType::Auth) {
+            throw new RouteNotFoundException('Collection is not auth enabled.');
+        }
+
+        $session = $request->auth;
+        if (!$session || !$session->get('meta')?->get('_id')) {
+            return Response::json(['message' => 'Unauthorized.'], 401);
+        }
+
+        $record = Record::find($session->get('meta')?->get('_id'));
+        if (!$record) {
+            return Response::json(['message' => 'User not found.'], 404);
+        }
+
+        $resource = new RecordResource($record);
+
+        return $resource->response();
+    }
+
+    public function logout(Request $request, Collection $collection)
+    {
+        if ($collection->type !== CollectionType::Auth) {
+            throw new RouteNotFoundException('Collection is not auth enabled.');
+        }
+
+        $session = $request->auth;
+        if (!$session || !$session->get('meta')?->get('_id')) {
+            return Response::json(['message' => 'Unauthorized.'], 401);
+        }
+
+        AuthSession::where('record_id', $session->get('meta')->get('_id'))
+            ->where('collection_id', $collection->id)
+            ->delete();
+
+        return Response::json(['message' => 'Logged out.']);
+    }
+
+    public function logoutAll(Request $request, Collection $collection)
+    {
+        if ($collection->type !== CollectionType::Auth) {
+            throw new RouteNotFoundException('Collection is not auth enabled.');
+        }
+
+        $session = $request->auth;
+        if (!$session || !$session->get('meta')?->get('_id')) {
+            return Response::json(['message' => 'Unauthorized.'], 401);
+        }
+
+        AuthSession::where('record_id', $session->get('meta')->get('_id'))
+            ->where('collection_id', $collection->id)
+            ->delete();
+
+        return Response::json(['message' => 'Logged out from all sessions.']);
     }
 }
