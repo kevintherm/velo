@@ -9,7 +9,7 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
     --animate-shimmer: shimmer 3s infinite linear;
-    
+
     @keyframes shimmer {
         from {
             background-position: -1000px 0;
@@ -20,7 +20,9 @@
     }
 }
 
-
+:root {
+    --color-primary: oklch(62.3% 0.214 259.815);
+}
 
 /**
     The lines above are intact.
@@ -42,15 +44,15 @@
     button, span {
         @apply text-xs border-none
     }
- 
+
     button {
         @apply cursor-pointer
     }
- 
+
     span[aria-current="page"] > span {
         @apply bg-base-content/5
     }
- 
+
     button, span[aria-current="page"] > span, span[aria-disabled="true"] span {
         @apply py-1 px-2
     }

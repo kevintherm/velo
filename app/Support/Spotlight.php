@@ -42,7 +42,12 @@ class Spotlight
                     'link' => route('collections', ['collection' => $col]),
                     'icon' => Blade::render("<x-icon name='$icon' />"),
                 ];
-            });
+            })->push([
+                'name' => 'superusers',
+                'description' => 'System Collection',
+                'link' => route('collections', ['collection' => 'superusers']),
+                'icon' => Blade::render("<x-icon name='o-users' />"),
+            ]);
 
         return $collections;
     }
