@@ -10,6 +10,8 @@ Route::prefix('_')->group(function () {
     Route::middleware(['throttle:60,1'])->group(function () {
         Volt::route('login', 'login')->name('login');
         Volt::route('register', 'register')->name('register');
+        Volt::route('forgot-password', 'forgot-password')->name('password.request');
+        Volt::route('reset-password/{token}', 'reset-password')->name('password.reset');
     });
 
     Route::middleware(['auth', 'verified'])->group(function () {

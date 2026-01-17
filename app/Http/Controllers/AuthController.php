@@ -198,4 +198,9 @@ class AuthController extends Controller
 
         return Response::json(['message' => 'Password has been reset.']);
     }
+
+    public function forgotPassword(Request $request, Collection $collection)
+    {
+
+    }
 }

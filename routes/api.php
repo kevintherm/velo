@@ -15,6 +15,7 @@ Route::prefix('collections/{collection:name}')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::post('/logout-all', [AuthController::class, 'logoutAll'])->name('logout-all');
         Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('reset-password');
+        Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('forgot-password');
     });
 
     Route::prefix('/records')->name('records.')->group(function () {
