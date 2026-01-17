@@ -115,7 +115,7 @@
                             @foreach (array_slice($relations, 0, 3) as $id)
                                 <div class="badge badge-soft badge-sm flex items-center gap-2 py-3.5">
                                     <p>{{ str($id)->limit(16) }}</p>
-                                    <x-button class="btn-xs btn-ghost btn-circle" link="{{ route('collection', ['collection' => $relatedCollections, 'recordId' => $id]) }}" external>
+                                    <x-button class="btn-xs btn-ghost btn-circle" link="{{ route('collections', ['collection' => $relatedCollections, 'recordId' => $id]) }}" external>
                                         <x-icon name="lucide.external-link" class="w-5 h-5" />
                                     </x-button>
                                 </div>
@@ -725,7 +725,7 @@
                 clearable
             >
                 <x-slot:append>
-                    <x-button link="{{ route('collection', ['collection' => $relationPicker['collection'] ?? '--', 'recordId' => '--']) }}" external>
+                    <x-button link="{{ route('collections', ['collection' => $relationPicker['collection'] ?? '--', 'recordId' => '--']) }}" external>
                         New record
                     </x-button>
                 </x-slot:append>
@@ -762,7 +762,7 @@
                                 {{-- <x-button x-on:click.stop="" class="btn-ghost rounded-full btn-xs">
                                     <x-icon name="o-pencil" class="w-4 h-4 text-gray-500" />
                                 </x-button> --}}
-                                <x-button x-on:click.stop="" link="{{ route('collection', ['collection' => $relationPicker['collection'], 'recordId' => $record->data['id']]) }}" external class="btn-ghost rounded-full btn-xs">
+                                <x-button x-on:click.stop="" link="{{ route('collections', ['collection' => $relationPicker['collection'], 'recordId' => $record->data['id']]) }}" external class="btn-ghost rounded-full btn-xs">
                                     <x-icon name="o-arrow-top-right-on-square" class="w-4 h-4 text-gray-400" />
                                 </x-button>
                             </div>

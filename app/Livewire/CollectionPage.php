@@ -107,75 +107,11 @@ class CollectionPage extends Component
 
     public array $optionsBoolSingleMultiple = [['id' => 0, 'name' => 'Single'], ['id' => 1, 'name' => 'Multiple']];
 
-    public array $mimeTypes = [
-        ['id' => 'application/pdf', 'name' => 'application/pdf', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/337/337946.png'],
-        ['id' => 'application/json', 'name' => 'application/json', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136525.png'],
-        ['id' => 'application/xml', 'name' => 'application/xml', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136526.png'],
-        ['id' => 'application/zip', 'name' => 'application/zip', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136544.png'],
-        ['id' => 'audio/mpeg', 'name' => 'audio/mpeg', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136548.png'],
-        ['id' => 'audio/wav', 'name' => 'audio/wav', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136548.png'],
-        ['id' => 'image/gif', 'name' => 'image/gif', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136521.png'],
-        ['id' => 'image/jpeg', 'name' => 'image/jpeg', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136524.png'],
-        ['id' => 'image/png', 'name' => 'image/png', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136523.png'],
-        ['id' => 'image/svg+xml', 'name' => 'image/svg+xml', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136530.png'],
-        ['id' => 'image/webp', 'name' => 'image/webp', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/8263/8263118.png'],
-        ['id' => 'text/css', 'name' => 'text/css', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136527.png'],
-        ['id' => 'text/csv', 'name' => 'text/csv', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136533.png'],
-        ['id' => 'text/html', 'name' => 'text/html', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136528.png'],
-        ['id' => 'text/plain', 'name' => 'text/plain', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136538.png'],
-        ['id' => 'video/mp4', 'name' => 'video/mp4', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136545.png'],
-        ['id' => 'video/mpeg', 'name' => 'video/mpeg', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136545.png'],
-        ['id' => 'video/quicktime', 'name' => 'video/quicktime', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/136/136545.png'],
-        ['id' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'name' => '.docx', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/888/888883.png'],
-        ['id' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'name' => '.xlsx', 'avatar' => 'https://cdn-icons-png.flaticon.com/512/888/888850.png'],
-    ];
+    public array $mimeTypes = [];
 
-    public array $mimeTypePresets = [
-        'image' => [
-            'image/gif',
-            'image/jpeg',
-            'image/png',
-            'image/svg+xml',
-            'image/webp',
-        ],
-        'audio' => [
-            'audio/mpeg',
-            'audio/wav',
-        ],
-        'video' => [
-            'video/mp4',
-            'video/mpeg',
-            'video/quicktime',
-        ],
-        'documents' => [
-            'application/pdf',
-            'text/csv',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ],
-        'archive' => [
-            'application/zip',
-        ],
-    ];
+    public array $mimeTypePresets = [];
 
-    public array $tinyMceConfig = [
-        'plugins' => 'autoresize lists link image table code quickbars',
-        'min_height' => 250,
-        'max_height' => 500,
-        'statusbar' => false,
-
-        'toolbar' => 'undo redo blocks fontfamily fontsize | '.
-            'bold italic underline strikethrough | '.
-            'forecolor backcolor | '.
-            'alignleft aligncenter alignright alignjustify | '.
-            'bullist numlist outdent indent | '.
-            'link image table | '.
-            'removeformat | '.
-            'code |',
-
-        'quickbars_selection_toolbar' => 'bold italic underline | link',
-        'quickbars_insert_toolbar' => 'quickimage quicktable',
-    ];
+    public array $tinyMceConfig = [];
 
     public array $availableCollections = [];
 
@@ -190,11 +126,13 @@ class CollectionPage extends Component
         $this->fillRecordForm();
         $this->fillCollectionForm();
         $this->fillCollectionIndexes();
+
         $this->breadcrumbs = [
             ['link' => route('home'), 'icon' => 's-home'],
             ['label' => ucfirst(request()->route()->getName())],
             ['label' => $this->collection->name],
         ];
+
         $this->availableCollections = [
             ['id' => '', 'name' => 'Choose collection', 'disabled' => true],
             ...Collection::whereNot('id', $this->collection->id)
@@ -203,6 +141,10 @@ class CollectionPage extends Component
                 ->map(fn ($c) => ['id' => $c->id, 'name' => $c->name])
                 ->toArray(),
         ];
+
+        $this->mimeTypes = config('larabase.available_mime_types');
+        $this->mimeTypePresets = config('larabase.mime_types_presets');
+        $this->tinyMceConfig = config('larabase.tinymce_config');
 
         if ($this->recordId) {
             $record = $this->collection->records()->filter('id', '=', $this->recordId)->first();
@@ -362,7 +304,17 @@ class CollectionPage extends Component
             $compiler->filterFromString($this->filter);
         }
 
-        return $compiler->paginate($this->perPage);
+        $data = $compiler->paginate($this->perPage);
+
+        $data->getCollection()->transform(function($recordData) {
+            if ($this->collection->type === CollectionType::Auth && $this->fields->firstWhere('name', 'password')) {
+                $recordData->password = Str::repeat('*', 12);
+            }
+
+            return $recordData;
+        });
+
+        return $data;
     }
 
     public function fillFieldsVisibility()
@@ -392,7 +344,6 @@ class CollectionPage extends Component
             foreach ($this->fields as $field) {
                 if ($field->type === FieldType::Bool) {
                     $this->form[$field->name] = false;
-
                     continue;
                 }
 
@@ -400,7 +351,6 @@ class CollectionPage extends Component
                     $this->form[$field->name] = [];
                     $this->files[$field->name] = [];
                     $this->library[$field->name] = collect([]);
-
                     continue;
                 }
 
@@ -412,6 +362,11 @@ class CollectionPage extends Component
 
         $this->form = $data;
         foreach ($this->fields as $field) {
+            if ($field->name == 'password' && $this->collection->type === CollectionType::Auth) {
+                $this->form['password'] = Str::repeat('*', 12);
+                continue;
+            }
+
             if ($field->type === FieldType::File) {
                 $this->files[$field->name] = [];
 
@@ -1119,7 +1074,7 @@ class CollectionPage extends Component
         }
 
         if ($this->collection->wasChanged('name')) {
-            return $this->redirectRoute('collection', ['collection' => $this->collection->fresh()]);
+            return $this->redirectroute('collections', ['collection' => $this->collection->fresh()]);
         }
 
         // Refresh collection and fields

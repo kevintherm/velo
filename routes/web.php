@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
 Route::prefix('_')->group(function () {
+
     Route::middleware(['throttle:60,1'])->group(function () {
         Volt::route('login', 'login')->name('login');
         Volt::route('register', 'register')->name('register');
@@ -16,11 +17,14 @@ Route::prefix('_')->group(function () {
         Route::get('', function (): RedirectResponse {
             $collection = Collection::firstOrFail();
 
-            return redirect()->route('collection', ['collection' => $collection]);
+            return redirect()->route('collections', ['collection' => $collection]);
         })->name('home');
 
+        Volt::route('collections/superusers', 'manage-superusers')->name('collections.superusers');
+
         // Volt::route('collections/{collection:name}', 'collection')->name('collection');
-        Route::get('collections/{collection:name}', CollectionPage::class)->name('collection');
+        Route::get('collections/{collection:name}', CollectionPage::class)->name('collections');
+
 
         Route::get('logout', function () {
             Auth::logout();
@@ -29,4 +33,5 @@ Route::prefix('_')->group(function () {
             return redirect(route('login'));
         })->name('logout');
     });
+
 });

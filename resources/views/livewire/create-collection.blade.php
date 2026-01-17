@@ -50,7 +50,7 @@ new class extends Component {
             $collection->fields()->create($f);
         }
 
-        return $this->redirect(route('collection', ['collection' => $collection]), navigate: true);
+        return $this->redirect(route('collections', ['collection' => $collection]), navigate: true);
     }
 
     #[On('create-collection')]
@@ -64,7 +64,8 @@ new class extends Component {
     <x-modal wire:model="showCreateCollectionForm" title="New Collection">
         <x-form wire:submit="save" no-separator>
             <x-input label="Name" icon="o-archive-box" wire:model="collectionName" placeholder="Name" />
-            <x-select label="Type" icon="o-table-cells" wire:model.live="collectionType" :options="CollectionType::toOptions()" />
+            <x-select label="Type" icon="o-table-cells" wire:model.live="collectionType"
+                :options="CollectionType::toOptions()" />
 
             <x-slot:actions>
                 <x-button label="Cancel" x-on:click="$wire.showCreateCollectionForm = false" />
