@@ -1182,6 +1182,11 @@ class CollectionPage extends Component
 
     public function deleteCollection()
     {
+        if (Collection::where('project_id', $this->collection->project_id)->count() == 1) {
+            $this->showError('Cannot delete the only collection in the project.');
+            return;
+        }
+
         $this->collection->delete();
         $this->showConfirmDeleteCollection = false;
         $this->redirectRoute('home', navigate: true);
