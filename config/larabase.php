@@ -3,6 +3,13 @@
 return [
 
     /**
+     * Session defer threshold
+     * How long a session is updated on every request
+     * default: 150 Seconds
+     */
+    'session_defer_threshold' => 150,
+
+    /**
      * SQL generated column strategy, can be STORED or VIRTUAL
      * Virtual will recalculate every read on database
      * STORED will recalculate once every write on database

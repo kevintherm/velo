@@ -13,9 +13,11 @@ return new class extends Migration
     {
         Schema::create('records', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('collection_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('collection_id')->index()->constrained()->cascadeOnDelete();
             $table->json('data');
             $table->timestamps();
+
+            $table->index(['id', 'collection_id']);
         });
     }
 

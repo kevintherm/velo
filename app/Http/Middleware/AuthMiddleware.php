@@ -16,47 +16,40 @@ class AuthMiddleware
      */
     public function handle(Request $request, \Closure $next): Response
     {
-        $token = $this->extractToken($request);
+        $token = $request->bearerToken();
         $hash = hash('sha256', $token);
 
-        $session = AuthSession::where('token_hash', $hash)->where('expires_at', '>', now())->first();
-
-        if (! $token || ! $session) {
-            $request->attributes->set('auth', collect([
-                'id' => null,
-                'name' => null,
-                'email' => null,
-                'meta' => collect([
-                    '_id' => null,
-                    'collection_id' => null,
-                    'project_id' => null,
-                ]),
-            ]));
-
+        if (! $token) {
+            $this->handleGuest($request);
             return $next($request);
         }
 
-        $record = Record::find($session->record_id);
+        $session = AuthSession::query()
+            ->join('records', function ($join) {
+                $join->on('records.id', '=', 'auth_sessions.record_id')
+                    ->on('records.collection_id', '=', 'auth_sessions.collection_id');
+            })
+            ->where('auth_sessions.token_hash', $hash)
+            ->where('auth_sessions.expires_at', '>', now())
+            ->select([
+                'auth_sessions.record_id',
+                'auth_sessions.collection_id',
+                'auth_sessions.project_id',
+                'auth_sessions.last_used_at',
+                'records.data AS user',
+            ])
+            ->first();
 
-        if (! $record) {
-            $session->delete();
-            $request->attributes->set('auth', collect([
-                'id' => null,
-                'name' => null,
-                'email' => null,
-                'meta' => collect([
-                    '_id' => null,
-                    'collection_id' => null,
-                    'project_id' => null,
-                ]),
-            ]));
-
+        if (! $session) {
+            $this->handleGuest($request);
             return $next($request);
         }
+
+        $recordData = json_decode($session->user, true);
 
         $request->merge([
             'auth' => collect([
-                ...$record->data->toArray(),
+                ...$recordData,
                 'meta' => collect([
                     '_id' => $session->record_id,
                     'collection_id' => $session->collection_id,
@@ -65,25 +58,26 @@ class AuthMiddleware
             ]),
         ]);
 
-        $session->update(['last_used_at' => now()]);
+        $threshold = config('larabase.session_defer_threshold') ?? 150;
+        if ($session->last_used_at->diffInSeconds(now()) > $threshold) {
+            $session->update(['last_used_at' => now()]);
+        }
 
         return $next($request);
     }
 
-    private function extractToken(Request $request): ?string
+    private function handleGuest($request): void
     {
-        $token = $request->bearerToken();
+        $request->attributes->set('auth', (object) [
+            'id' => null,
+            'name' => null,
+            'email' => null,
+            'meta' => (object) [
+                '_id' => null,
+                'collection_id' => null,
+                'project_id' => null,
+            ],
+        ]);
 
-        if ($token) {
-            return $token;
-        }
-
-        $token = $request->input('token');
-
-        if ($token) {
-            return $token;
-        }
-
-        return null;
     }
 }

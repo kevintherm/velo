@@ -29,6 +29,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['project_id', 'record_id']);
+            $table->index(['token_hash', 'expires_at']);
         });
     }
 

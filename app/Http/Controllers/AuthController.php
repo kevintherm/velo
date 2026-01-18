@@ -241,7 +241,8 @@ class AuthController extends Controller
             'device_name' => $request->input('device_name'),
         ]);
 
-        // Mail::to($email)->send(new PasswordReset($token, $collection));
+//        Mail::to($email)->queue(new PasswordReset($token, $collection));
+        Mail::to($email)->send(new PasswordReset($token, $collection));
 
         return Response::json([
             'message' => 'If an account exists with this email, you will receive a password reset token.',
@@ -256,8 +257,7 @@ class AuthController extends Controller
 
         $request->validate([
             'token' => 'required|string',
-            'password' => ['required', 'string', Password::min(8)],
-            'password_confirmation' => 'required|same:password',
+            'new_password' => ['required', 'string', Password::min(8), 'confirmed'],
             'invalidate_sessions' => 'boolean',
         ]);
 
@@ -283,7 +283,7 @@ class AuthController extends Controller
             return Response::json(['message' => 'User associated with this token no longer exists.'], 404);
         }
 
-        $record->data->put('password', Hash::make($request->input('password')));
+        $record->data->put('password', Hash::make($request->input('new_password')));
         $record->save();
 
         $reset->used_at = now();
