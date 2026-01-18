@@ -21,7 +21,10 @@ Route::prefix('_')->group(function () {
             return redirect()->route('collections', ['collection' => $collection]);
         })->name('home');
 
-        Volt::route('collections/superusers', 'manage-superusers')->name('collections.superusers');
+        Volt::route('system/superusers', 'manage-superusers')->name('system.superusers');
+        Volt::route('system/sessions', 'manage-auth-sessions')->name('system.sessions');
+        Volt::route('system/password-resets', 'manage-password-resets')->name('system.password.resets');
+        Route::redirect('system/logs', '/_/pulse')->name('system.logs');
 
         // Volt::route('collections/{collection:name}', 'collection')->name('collection');
         Route::get('collections/{collection:name}', CollectionPage::class)->name('collections');

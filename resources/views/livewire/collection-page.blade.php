@@ -103,19 +103,22 @@
                 @continue
             @endif
 
-            
+
             @if ($field->type === App\Enums\FieldType::Relation)
                 @cscope('cell_' . $field->name, $row, $field)
                     @php
                         $relations = isset($row->{$field->name}) ? $row->{$field->name} : [];
-                        $relatedCollections = App\Models\Collection::find($field->options->collection)?->name;
+                        $relatedCollections = App\Models\Collection::find($field->options->collection);
                     @endphp
                     @if (!empty($relations))
                         <div class="flex flex-wrap gap-2">
                             @foreach (array_slice($relations, 0, 3) as $id)
+                                @php
+                                    $record = !$relatedCollections ? null : $relatedCollections->records()->filter('id', '=', $id)->buildQuery()->first();
+                                @endphp
                                 <div class="badge badge-soft badge-sm flex items-center gap-2 py-3.5">
-                                    <p>{{ str($id)->limit(16) }}</p>
-                                    <x-button class="btn-xs btn-ghost btn-circle" link="{{ route('collections', ['collection' => $relatedCollections, 'recordId' => $id]) }}" external>
+                                    <p>{{ str($record?->data['name'] ?? $record?->data['email'] ?? $id)->limit(16) }}</p>
+                                    <x-button class="btn-xs btn-ghost btn-circle" link="{{ route('collections', ['collection' => $relatedCollections?->name, 'recordId' => $id]) }}" external>
                                         <x-icon name="lucide.external-link" class="w-5 h-5" />
                                     </x-button>
                                 </div>
@@ -141,7 +144,7 @@
                                     children: 'a',
                                     pswpModule: PhotoSwipe
                                 });
-                        
+
                                 lightbox.init();
                             }
                         }">
@@ -301,7 +304,7 @@
                                     @endif
                                 </legend>
 
-                                <div 
+                                <div
                                     class="input w-full h-auto min-h-10 py-2 flex flex-wrap gap-2 items-center {{ $errors->has("form.{$field->name}") || $errors->has("form.{$field->name}.*") ? 'input-error' : '' }}"
                                 >
                                     @php
@@ -313,7 +316,7 @@
                                             $displayField = 'id';
                                         }
                                     @endphp
-                                    
+
                                     @if(!empty($selectedIds) && $relatedCollection)
                                         @foreach($selectedIds as $recordId)
                                             @php
@@ -330,13 +333,13 @@
                                     @endif
                                 </div>
 
-                                <x-button 
-                                    label="Open Relation Picker" 
-                                    icon="lucide.pen-tool" 
-                                    class="btn-sm btn-soft mt-2 w-full" 
-                                    x-on:click="$wire.openRelationPicker('{{ $field->name }}')" 
-                                    wire:loading.attr="disabled" 
-                                    wire:target="fillRecordForm" 
+                                <x-button
+                                    label="Open Relation Picker"
+                                    icon="lucide.pen-tool"
+                                    class="btn-sm btn-soft mt-2 w-full"
+                                    x-on:click="$wire.openRelationPicker('{{ $field->name }}')"
+                                    wire:loading.attr="disabled"
+                                    wire:target="fillRecordForm"
                                 />
 
                                 @foreach($errors->get("form.{$field->name}") as $message)
@@ -398,22 +401,22 @@
                         <div class="space-y-2 px-0.5">
                             <div id="sortable-fields-list" wire:sortable="updateFieldOrder" wire:sortable.options="{ animation: 150, ghostClass: 'bg-primary/10', dragClass: 'opacity-50', }">
                                 @foreach ($collectionForm['fields'] as $index => $field)
-                                    <div class="flex items-center gap-2 mb-4 group relative" 
-                                        wire:key="field-{{ $field['id'] }}" 
+                                    <div class="flex items-center gap-2 mb-4 group relative"
+                                        wire:key="field-{{ $field['id'] }}"
                                         wire:sortable.item="{{ $field['id'] }}">
                                         @php
                                             $fieldId = $field['id'];
                                             $field = new App\Models\CollectionField($field);
                                             $isDeleted = isset($collectionForm['fields'][$index]['_deleted']) && $collectionForm['fields'][$index]['_deleted'];
                                         @endphp
-                                        
-                                        <x-icon name="o-bars-3" 
+
+                                        <x-icon name="o-bars-3"
                                                 wire:sortable.handle
                                                 class="w-4 h-4 drag-handle cursor-move text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 absolute left-0 -translate-x-6" />
 
-                                        <x-collapse separator 
+                                        <x-collapse separator
                                                     class="w-full rounded"
-                                                    name="collapse_{{ $fieldId }}" 
+                                                    name="collapse_{{ $fieldId }}"
                                                     wire:loading.class="opacity-50"
                                                     wire:target="duplicateField({{ $index }}), deleteField({{ $index }})">
                                             <x-slot:heading>
@@ -464,7 +467,7 @@
                                                                         <div class="col-span-1 md:col-span-2">
                                                                             <x-select label="Reference Collection" wire:model="collectionForm.fields.{{ $index }}.options.collection" :options="$availableCollections" icon="o-share" />
                                                                         </div>
-                                                                        
+
                                                                         @if ($collectionForm['fields'][$index]['options']['multiple'] == true)
                                                                             <x-input type="number" label="Min Select" wire:model="collectionForm.fields.{{ $index }}.options.minSelect" placeholder="No min select" min="0" />
                                                                             <x-input type="number" label="Min Select" wire:model="collectionForm.fields.{{ $index }}.options.maxSelect" placeholder="No max select" min="0" />
@@ -558,10 +561,10 @@
                                                                             hint="Allow multiple file uploads" />
                                                                 @endif
                                                                 @if ($field->type == App\Enums\FieldType::Relation)
-                                                                    <x-toggle id="toggle-multiple-{{ $index }}" label="Allow Multiple" 
-                                                                            wire:model.live="collectionForm.fields.{{ $index }}.options.multiple" 
+                                                                    <x-toggle id="toggle-multiple-{{ $index }}" label="Allow Multiple"
+                                                                            wire:model.live="collectionForm.fields.{{ $index }}.options.multiple"
                                                                             hint="Allow multiple relations" />
-                                                                    <x-toggle id="toggle-cascadeDelete-{{ $index }}" label="Cascade Delete" 
+                                                                    <x-toggle id="toggle-cascadeDelete-{{ $index }}" label="Cascade Delete"
                                                                             wire:model.live="collectionForm.fields.{{ $index }}.options.cascadeDelete"
                                                                             hint="Delete records if relation is deleted" />
                                                                 @endif
@@ -631,11 +634,11 @@
                                         <x-textarea wire:model="collectionForm.api_rules.manage" label="Manage Rule" placeholder="Manage Rule" inline hint="This rule is executed in addition to the create and update API rules. It enables superuser-like permissions to allow fully managing the auth record(s), eg. changing the password without requiring to enter the old one, directly updating the verified state or email, etc." />
                                     </div>
                                 </x-slot:content>
-                            </x-collapse>                            
+                            </x-collapse>
                         @endif
                     </div>
                 </x-tab>
-                
+
                 @if ($this->collection->type === App\Enums\CollectionType::Auth)
                     <x-tab name="options-tab" label="Options">
                         <div class="space-y-4 px-0.5">
@@ -652,24 +655,24 @@
                                                     <x-toggle id="auth-methods-standard-enabled" wire:model="collectionForm.options.auth_methods.standard.enabled" />
                                                 </div>
                                                 <div class="ml-2">
-                                                    <x-choices-offline 
-                                                        label="Fields" 
-                                                        wire:model="collectionForm.options.auth_methods.standard.fields" 
-                                                        :options="$this->fields->map(fn($f) => ['id' => $f->name, 'name' => $f->name])->toArray()" 
-                                                        hint="Email is required" 
-                                                        searchable 
-                                                        multiple 
+                                                    <x-choices-offline
+                                                        label="Fields"
+                                                        wire:model="collectionForm.options.auth_methods.standard.fields"
+                                                        :options="$this->fields->map(fn($f) => ['id' => $f->name, 'name' => $f->name])->toArray()"
+                                                        hint="Email is required"
+                                                        searchable
+                                                        multiple
                                                     />
                                                 </div>
                                             </div>
-                                            
+
                                             {{-- OAuth2 --}}
                                             <div class="p-4 rounded-lg bg-base-100">
                                                 <div class="flex items-center justify-between mb-4">
                                                     <div class="font-bold text-lg">OAuth2</div>
                                                     <x-toggle id="auth-methods-oauth2-enabled" wire:model="collectionForm.options.auth_methods.oauth2.enabled" />
                                                 </div>
-                                                
+
                                                 <div class="space-y-4">
                                                     <div>
                                                         <label class="label">Providers</label>
@@ -687,7 +690,7 @@
                                                     <div class="font-bold text-lg">OTP (One-Time Password)</div>
                                                     <x-toggle id="auth-methods-otp-enabled" wire:model="collectionForm.options.auth_methods.otp.enabled" />
                                                 </div>
-                                                
+
                                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <x-input label="Duration (seconds)" type="number" wire:model="collectionForm.options.auth_methods.otp.config.duration_s" />
                                                     <x-input label="Length" type="number" wire:model="collectionForm.options.auth_methods.otp.config.generate_password_length" />
@@ -831,7 +834,7 @@
 
     <x-modal wire:model="showRelationPickerModal" title="Select {{ $relationPicker['collection']->name ?? 'users' }} records">
         <div class="space-y-6">
-            <x-input 
+            <x-input
                 wire:model.live.debounce.300ms="relationPicker.search"
                 placeholder="Filter records..."
                 icon="o-magnifying-glass"
@@ -848,17 +851,17 @@
                 @if(!empty($relationPicker['records']))
                     @foreach($relationPicker['records'] as $record)
                         @php($isSelected = in_array($record->data['id'], $relationPicker['selected'] ?? []))
-                        
-                        <div 
+
+                        <div
                             wire:key="relation-record-{{ $record->data['id'] }}"
                             class="group flex items-center justify-between p-4 border-b border-base-200 last:border-b-0 cursor-pointer hover:bg-base-300 transition-colors {{ $isSelected ? 'bg-base-300' : '' }}"
                             wire:click="toggleRelationRecord('{{ $record->data['id'] }}')">
-                            
+
                             <div class="flex items-center gap-4">
                                 <div class="shrink-0">
                                     <x-icon name="o-check-circle" @class(['size-6 stroke-primary transition-all duration-300', 'opacity-10 grayscale-100' => !$isSelected]) />
                                 </div>
-                                
+
                                 <div class="flex items-baseline gap-2">
                                     <div>
                                         <p class="font-medium">
@@ -901,14 +904,14 @@
         </div>
 
         <x-slot:actions>
-            <x-button 
-                label="Cancel" 
+            <x-button
+                label="Cancel"
                 x-on:click="$wire.showRelationPickerModal = false" />
-            
-            <x-button 
-                label="Set selection" 
+
+            <x-button
+                label="Set selection"
                 class="btn-primary"
-                wire:click="saveRelationSelection" 
+                wire:click="saveRelationSelection"
                 spinner="saveRelationSelection" />
         </x-slot:actions>
     </x-modal>

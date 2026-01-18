@@ -91,12 +91,13 @@ class AuthController extends Controller
             ->where('ip_address', $request->ip())
             ->exists();
 
+        $authTokenExpires = (int) $collection->options['other']['tokens_options']['auth_duration']['value'] ?? 604800;
         AuthSession::create([
             'project_id' => $collection->project_id,
             'collection_id' => $collection->id,
             'record_id' => $record->id,
             'token_hash' => $hashed,
-            'expires_at' => now()->addHours(24),
+            'expires_at' => now()->addSeconds($authTokenExpires),
             'last_used_at' => now(),
             'device_name' => $request->input('device_name'),
             'ip_address' => $request->ip(),

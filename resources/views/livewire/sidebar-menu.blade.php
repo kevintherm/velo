@@ -38,7 +38,7 @@ function getIcon($type)
     <x-menu-separator />
 
     @foreach ($projects as $project)
-        <x-menu-sub :title="$project->name" icon="o-circle-stack" :open="$loop->first" active-by-route>
+        <x-menu-sub :title="$project->name" icon="o-circle-stack" active-by-route>
             @foreach ($project->collections()->oldest()->get() as $c)
                 <x-menu-item :title="$c->name" :icon="getIcon($c->type)" link="{{ route('collections', ['collection' => $c]) }}" />
             @endforeach
@@ -46,7 +46,9 @@ function getIcon($type)
     @endforeach
 
     <x-menu-sub title="System" icon="o-cog-6-tooth" activate-by-route>
-        <x-menu-item title="superusers" icon="o-archive-box" link="{{ route('collections.superusers') }}" />
+        <x-menu-item title="superusers" icon="o-archive-box" link="{{ route('system.superusers') }}" />
+        <x-menu-item title="authSessions" icon="o-archive-box" link="{{ route('system.sessions') }}" />
+        <x-menu-item title="passwordResets" icon="o-archive-box" link="{{ route('system.password.resets') }}" />
     </x-menu-sub>
 
     <x-menu-separator />

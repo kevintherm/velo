@@ -81,7 +81,7 @@ class CustomMain extends Component
                                         <div class="px-4 py-2">
                                             <x-theme-toggle darkTheme="dark" lightTheme="light" />
                                         </div>
-                                        <x-menu-item icon="lucide.chart-line" title="Logs" />
+                                        <x-menu-item icon="lucide.chart-line" title="Logs" link="{{ route('system.logs') }}" no-wire-navigate />
                                         <x-menu-item icon="lucide.settings-2" title="Settings" />
                                         <x-mary-menu-item
                                             @click="toggle"

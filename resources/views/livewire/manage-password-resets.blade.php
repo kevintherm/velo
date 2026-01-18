@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\AuthPasswordReset;
+use App\Models\AuthSession;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Computed;
@@ -25,32 +27,30 @@ new class extends Component {
     public array $selected = [];
     public array $fieldsVisibility = [
         'id' => true,
-        'name' => true,
+        'project.name' => false,
+        'collection.name' => true,
+        'record_id' => true,
         'email' => true,
-        'password' => false,
+        'token' => true,
+        'device_name' => true,
+        'ip_address' => true,
+        'used' => true,
         'created_at' => true,
         'updated_at' => true,
     ];
 
-    // Record Form State
-    public bool $showRecordDrawer = false;
-    public ?int $editingUserId = null;
-
-    #[Validate]
-    public string $name = '';
-
-    #[Validate]
-    public string $email = '';
-
-    #[Validate]
-    public string $password = '';
-
-    #[Validate]
-    public string $password_new = '';
-
     // UI/UX State
     public bool $showConfirmDeleteDialog = false;
     public array $recordToDelete = [];
+
+    public function mount(): void
+    {
+        $this->breadcrumbs = [
+            ['link' => route('home'), 'icon' => 's-home'],
+            ['label' => 'System'],
+            ['label' => 'passwordResets'],
+        ];
+    }
 
     public function rules(): array
     {
@@ -66,15 +66,6 @@ new class extends Component {
                 ? ['nullable']
                 : ['required', Password::min(8)],
             'password_new' => ['nullable', Password::min(8)],
-        ];
-    }
-
-    public function mount(): void
-    {
-        $this->breadcrumbs = [
-            ['link' => route('home'), 'icon' => 's-home'],
-            ['label' => 'System'],
-            ['label' => 'superusers'],
         ];
     }
 
@@ -99,9 +90,14 @@ new class extends Component {
 
         $fieldLabels = [
             'id' => 'ID',
-            'name' => 'Name',
+            'project.name' => 'Project',
+            'collection.name' => 'Collection',
+            'record_id' => 'Record',
             'email' => 'Email',
-            'password' => 'Password',
+            'token' => 'Token',
+            'used_at' => 'Used',
+            'device_name' => 'Device',
+            'ip_address' => 'IP',
             'created_at' => 'Created',
             'updated_at' => 'Updated',
         ];
@@ -122,13 +118,14 @@ new class extends Component {
     #[Computed]
     public function tableRows()
     {
-        $query = User::query();
+        $query = AuthPasswordReset::query();
 
         if (!empty($this->filter)) {
             $query->where(function ($q) {
-                $q->where('name', 'like', "%{$this->filter}%")
-                    ->orWhere('email', 'like', "%{$this->filter}%")
-                    ->orWhere('id', 'like', "%{$this->filter}%");
+                $q->where('record_id', 'like', "%{$this->filter}%")
+                    ->orWhere('collection_id', 'like', "%{$this->filter}%")
+                    ->orWhere('token', 'like', "%{$this->filter}%")
+                    ->orWhere('email', 'like', "%{$this->filter}%");
             });
         }
 
@@ -141,47 +138,6 @@ new class extends Component {
 
     /* === RECORD OPERATIONS === */
 
-    public function resetForm(): void
-    {
-        $this->resetValidation();
-        $this->reset(['name', 'email', 'password', 'password_new']);
-        $this->editingUserId = null;
-    }
-
-    public function showRecord(int $id): void
-    {
-        $user = User::find($id);
-
-        if (!$user) {
-            $this->showError('Record not found.');
-            return;
-        }
-
-        $this->editingUserId = $user->id;
-        $this->name = $user->name;
-        $this->email = $user->email;
-        $this->password = '********';
-        $this->password_new = '';
-
-        $this->showRecordDrawer = true;
-    }
-
-    public function duplicateRecord(int $id): void
-    {
-
-        $user = User::find($id);
-
-        if (!$user) {
-            $this->showError('Record not found.');
-            return;
-        }
-
-        $this->resetForm();
-        $this->name = $user->name;
-        $this->email = $user->email;
-        $this->showRecordDrawer = true;
-    }
-
     public function promptDeleteRecord(string $ids): void
     {
         $this->recordToDelete = array_filter(explode(',', $ids));
@@ -190,13 +146,8 @@ new class extends Component {
 
     public function confirmDeleteRecord(): void
     {
-        if (in_array(Auth::user()->id, $this->recordToDelete)) {
-            $this->showError('Cannot delete logged in superuser.');
-            return;
-        }
-
         $count = count($this->recordToDelete);
-        User::destroy($this->recordToDelete);
+        AuthPasswordReset::destroy($this->recordToDelete);
 
         $this->showRecordDrawer = false;
         $this->showConfirmDeleteDialog = false;
@@ -205,37 +156,6 @@ new class extends Component {
         unset($this->tableRows);
 
         $this->showSuccess("Deleted $count " . str('user')->plural($count) . ".");
-    }
-
-    public function saveRecord(): void
-    {
-        $this->validate();
-
-        if ($this->editingUserId) {
-            $user = User::findOrFail($this->editingUserId);
-
-            $user->name = $this->name;
-            $user->email = $this->email;
-
-            if (!empty($this->password_new)) {
-                $user->password = $this->password_new;
-            }
-
-            $user->save();
-            $status = 'Updated';
-        } else {
-            User::create([
-                'name' => $this->name,
-                'email' => $this->email,
-                'password' => $this->password,
-            ]);
-            $status = 'Created';
-        }
-
-        $this->showRecordDrawer = false;
-        $this->resetForm();
-        unset($this->tableRows);
-        $this->showSuccess("$status user successfully.");
     }
 
     /* === END RECORD OPERATIONS === */
@@ -284,10 +204,6 @@ new class extends Component {
                           wire:click="$refresh"/>
             </div>
         </div>
-        <div class="flex items-center gap-2">
-            <x-button label="New Record" class="btn-primary" icon="o-plus"
-                      x-on:click="$wire.showRecordDrawer = true; $wire.resetForm()"/>
-        </div>
     </div>
 
     <div class="my-8"></div>
@@ -305,10 +221,10 @@ new class extends Component {
 
             <x-menu-item title="Toggle Fields" disabled/>
 
-            @foreach (['id' => 'ID', 'name' => 'Name', 'email' => 'Email', 'password' => 'Password', 'created_at' => 'Created', 'updated_at' => 'Updated'] as $field => $label)
+            @foreach ($fieldsVisibility as $field => $label)
                 <x-menu-item :wire:key="$field" x-on:click.stop="$wire.toggleField('{{ $field }}')">
-                    <x-toggle :label="$label"
-                              :checked="$fieldsVisibility[$field] ?? false"/>
+                    <x-toggle :label="str($field)->before('.')->value()"
+                              :checked="$label ?? false"/>
                 </x-menu-item>
             @endforeach
         </x-dropdown>
@@ -323,25 +239,11 @@ new class extends Component {
         <x-slot:empty>
             <div class="flex flex-col items-center my-4">
                 <p class="text-gray-500 text-center mb-4">No results found.</p>
-                <x-button label="New Record" class="btn-primary btn-soft btn-sm" icon="o-plus"
-                          x-on:click="$wire.showRecordDrawer = true; $wire.resetForm()"/>
             </div>
         </x-slot:empty>
 
-        @scope('header_id', $header)
-        <x-icon name="lucide.key" class="w-3 opacity-80"/> {{ $header['label'] }}
-        @endscope
-
-        @scope('header_name', $header)
-        <x-icon name="lucide.user" class="w-3 opacity-80"/> {{ $header['label'] }}
-        @endscope
-
-        @scope('header_email', $header)
-        <x-icon name="lucide.mail" class="w-3 opacity-80"/> {{ $header['label'] }}
-        @endscope
-
-        @scope('header_password', $header)
-        <x-icon name="lucide.lock" class="w-3 opacity-80"/> {{ $header['label'] }}
+        @scope('header_last_used_at', $header)
+        <x-icon name="lucide.calendar-clock" class="w-3 opacity-80"/> {{ $header['label'] }}
         @endscope
 
         @scope('header_created_at', $header)
@@ -359,8 +261,36 @@ new class extends Component {
         </div>
         @endscope
 
-        @scope('cell_password', $row)
+        @scope('cell_record_id', $row)
+        <div class="badge badge-soft badge-sm flex items-center gap-2 py-3.5">
+            <p>{{ $row->record->data['name'] ?? $row->record->data['email'] ?? $row->record->data['id'] ?? $row->record_id }}</p>
+            <x-button class="btn-xs btn-ghost btn-circle" link="{{ route('collections', ['collection' => $row->collection->name, 'recordId' => $row->record->data['id']]) }}" external>
+                <x-icon name="lucide.external-link" class="w-5 h-5" />
+            </x-button>
+        </div>
+        @endscope
+
+        @scope('cell_token', $row)
         <span class="text-gray-400">********</span>
+        @endscope
+
+        @scope('cell_device_name', $row)
+        @if ($row->device_name)
+            <p>{{ $row->device_name }}</p>
+        @else
+            <p>-</p>
+        @endif
+        @endscope
+
+        @scope('cell_last_used_at', $row)
+        @if ($row->last_used_at)
+            <div class="flex flex-col w-20">
+                <p>{{ $row->last_used_at->format('Y-m-d') }}</p>
+                <p class="text-xs opacity-80">{{ $row->last_used_at->format('H:i:s') }}</p>
+            </div>
+        @else
+            <p>-</p>
+        @endif
         @endscope
 
         @scope('cell_created_at', $row)
@@ -385,10 +315,6 @@ new class extends Component {
         @endif
         @endscope
 
-        @scope('actions', $row)
-        <x-button icon="o-arrow-right" x-on:click="$wire.showRecord('{{ $row->id }}')"
-                  spinner="showRecord('{{ $row->id }}')" class="btn-sm"/>
-        @endscope
     </x-table>
 
     <div class="fixed bottom-0 left-0 right-0" x-show="$wire.selected.length > 0" x-transition x-cloak>
@@ -406,63 +332,6 @@ new class extends Component {
     </div>
 
     {{-- MODALS --}}
-
-    <x-drawer wire:model="showRecordDrawer" class="w-full lg:w-2/5" right without-trap-focus>
-        <div class="flex justify-between">
-            <div class="flex items-center gap-2">
-                <x-button icon="o-x-mark" class="btn-circle btn-ghost" x-on:click="$wire.showRecordDrawer = false"/>
-                <p class="text-sm">{{ $editingUserId ? 'Update' : 'New' }} <span
-                        class="font-bold">superusers</span> record</p>
-            </div>
-            <x-dropdown right>
-                <x-slot:trigger>
-                    <x-button icon="o-bars-2" class="btn-circle btn-ghost" :hidden="!$editingUserId"/>
-                </x-slot:trigger>
-
-                <x-menu-item title="Copy raw JSON" icon="o-document-text" x-data="{
-                    copyJson() {
-                        const data = {
-                            name: $wire.name,
-                            email: $wire.email
-                        };
-                        const json = JSON.stringify(data, null, 2);
-                        window.copyText(json);
-                        $wire.dispatchSelf('toast', { message: 'Copied raw JSON to your clipboard.' });
-                    }
-                }"
-                             x-on:click="copyJson"/>
-                <x-menu-item title="Duplicate" icon="o-document-duplicate"
-                             x-on:click="$wire.duplicateRecord($wire.editingUserId)"/>
-
-                <x-menu-separator/>
-
-                <x-menu-item title="Delete" icon="o-trash" class="text-error"
-                             x-on:click="$wire.promptDeleteRecord($wire.editingUserId)"/>
-            </x-dropdown>
-        </div>
-
-        <div class="my-4"></div>
-
-        <x-form wire:submit="saveRecord">
-            <x-input label="Name" wire:model="name" icon="o-user" required/>
-
-            <x-input label="Email" type="email" wire:model="email" icon="o-envelope" required autocomplete="email"/>
-
-            @if (!$editingUserId)
-                <x-password label="Password" wire:model="password" password-icon="o-key"
-                            required autocomplete="new-password"/>
-            @else
-                <x-password label="New Password" wire:model="password_new" password-icon="o-key"
-                            placeholder="Fill to change password..." autocomplete="new-password"/>
-            @endif
-
-            <x-slot:actions>
-                <x-button label="Cancel" x-on:click="$wire.showRecordDrawer = false"/>
-                <x-button label="Save" class="btn-primary" type="submit" spinner="saveRecord"/>
-            </x-slot:actions>
-        </x-form>
-
-    </x-drawer>
 
     <x-modal wire:model="showConfirmDeleteDialog" title="Confirm Delete">
         Are you sure you want to delete {{ count($recordToDelete) > 1 ? count($recordToDelete) : 'this' }}

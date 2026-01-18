@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AuthSession extends Model
 {
@@ -14,6 +15,21 @@ class AuthSession extends Model
             'expires_at' => 'datetime',
             'last_used_at' => 'datetime',
         ];
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function collection(): BelongsTo
+    {
+        return $this->belongsTo(Collection::class);
+    }
+
+    public function record(): BelongsTo
+    {
+        return $this->belongsTo(Record::class);
     }
 
     public static function generateToken(): array
