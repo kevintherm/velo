@@ -112,4 +112,6 @@ return [
         'quickbars_selection_toolbar' => 'bold italic underline | link',
         'quickbars_insert_toolbar' => 'quickimage quicktable',
     ],
+
+    'tinymce_key' => env('TINYMCE_KEY'),
 ];

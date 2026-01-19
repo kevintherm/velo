@@ -23,8 +23,8 @@ Route::prefix('_')->group(function () {
         Route::livewire('system/otps', 'pages::manage-otps')->name('system.otps');
         Route::livewire('system/password-resets', 'pages::manage-password-resets')->name('system.password.resets');
         Route::redirect('system/logs', '/_/pulse')->name('system.logs');
-        
-        Route::livewire('collections/{collection:name}', CollectionPage::class)->name('collections');
+
+        Route::livewire('collections/{collection:name}', 'pages::collection')->name('collections');
 
         Route::get('logout', function () {
             Auth::logout();
