@@ -22,7 +22,7 @@ new class extends Component {
     // Table State
     public int $perPage = 15;
     public string $filter = '';
-    public array $sortBy = ['column' => 'created_at', 'direction' => 'desc'];
+    public array $sortBy = ['column' => 'last_used_at', 'direction' => 'desc'];
     public array $selected = [];
     public array $fieldsVisibility = [
         'id' => true,
