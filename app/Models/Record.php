@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Casts\AsSafeCollection;
 use App\Enums\FieldType;
 use Illuminate\Support\Str;
-use App\Events\CollectionUpdated;
 use App\Services\RealtimeService;
 use Illuminate\Database\Eloquent\Model;
 use App\Exceptions\InvalidRecordException;
@@ -17,7 +17,7 @@ class Record extends Model
     protected function casts(): array
     {
         return [
-            'data' => \Illuminate\Database\Eloquent\Casts\AsCollection::class,
+            'data' => AsSafeCollection::class
         ];
     }
 
@@ -103,12 +103,13 @@ class Record extends Model
         });
 
         static::saved(function (Record $record) {
-            $action = $record->wasRecentlyCreated ? 'create' : 'update';
+            dump(now()->timestamp);
+            $action = $record->wasRecentlyCreated ? 'created' : 'updated';
             app(RealtimeService::class)->dispatchUpdates($record, $action);
         });
 
         static::deleted(function (Record $record) {
-            app(RealtimeService::class)->dispatchUpdates($record, 'delete');
+            app(RealtimeService::class)->dispatchUpdates($record, 'deleted');
         });
     }
 }

@@ -25,6 +25,9 @@ class RecordController extends Controller
             $context = [
                 'sys_request' => (object) [
                     'auth' => $request->user(),
+                    'body' => $request->post(),
+                    'param' => $request->route()->parameters(),
+                    'query' => $request->query(),
                 ],
             ];
             $interpolatedRule = app(EvaluateRuleExpression::class)

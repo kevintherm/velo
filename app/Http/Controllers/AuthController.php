@@ -59,7 +59,7 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['identifier' => 'Invalid credentials.']);
         }
 
-        if (!\Hash::check($request->input('password'), $record->data->get('password'))) {
+        if (!\Hash::check($request->input('password'), $record->data->password)) {
             throw ValidationException::withMessages(['identifier' => 'Invalid credentials.']);
         }
 
@@ -105,7 +105,7 @@ class AuthController extends Controller
         ]);
 
         if ($isNewIp && isset($collection->options['mail_templates']['login_alert']['body']) && !empty($collection->options['mail_templates']['login_alert']['body'])) {
-            $email = $record->data->get('email');
+            $email = $record->data->email;
             if ($email) {
                 Mail::to($email)->queue(new LoginAlert(
                     $collection,
@@ -129,11 +129,11 @@ class AuthController extends Controller
         }
 
         $session = $request->user();
-        if (!$session || !$session->get('meta')?->get('_id')) {
+        if (!$session || !$session->meta?->_id) {
             return Response::json(['message' => 'Unauthorized.'], 401);
         }
 
-        $record = Record::find($session->get('meta')?->get('_id'));
+        $record = Record::find($session->meta?->_id);
         if (!$record) {
             return Response::json(['message' => 'User not found.'], 404);
         }
@@ -150,14 +150,14 @@ class AuthController extends Controller
         }
 
         $session = $request->user();
-        if (!$session || !$session->get('meta')?->get('_id')) {
+        if (!$session || !$session->meta?->_id) {
             return Response::json(['message' => 'Unauthorized.'], 401);
         }
 
         $token = $request->bearerToken();
         $hashedToken = hash('sha256', $token);
 
-        AuthSession::where('record_id', $session->get('meta')->get('_id'))
+        AuthSession::where('record_id', $session->meta->_id)
             ->where('collection_id', $collection->id)
             ->where('token_hash', $hashedToken)
             ->delete();
@@ -172,11 +172,11 @@ class AuthController extends Controller
         }
 
         $session = $request->user();
-        if (!$session || !$session->get('meta')?->get('_id')) {
+        if (!$session || !$session->meta?->_id) {
             return Response::json(['message' => 'Unauthorized.'], 401);
         }
 
-        AuthSession::where('record_id', $session->get('meta')->get('_id'))
+        AuthSession::where('record_id', $session->meta->_id)
             ->where('collection_id', $collection->id)
             ->delete();
 
@@ -190,7 +190,7 @@ class AuthController extends Controller
         }
 
         $session = $request->user();
-        if (!$session || !$session->get('meta')?->get('_id')) {
+        if (!$session || !$session->meta?->_id) {
             return Response::json(['message' => 'Unauthorized.'], 401);
         }
 
@@ -200,12 +200,12 @@ class AuthController extends Controller
             'invalidate_sessions' => 'boolean',
         ]);
 
-        $record = Record::find($session->get('meta')->get('_id'));
+        $record = Record::find($session->meta->_id);
         if (!$record) {
             return Response::json(['message' => 'User not found.'], 404);
         }
 
-        if (!Hash::check($request->input('password'), $record->data->get('password'))) {
+        if (!Hash::check($request->input('password'), $record->data->password)) {
             return Response::json(['message' => 'Invalid current password.'], 400);
         }
 
@@ -213,7 +213,7 @@ class AuthController extends Controller
         $record->save();
 
         if ($request->input('invalidate_sessions')) {
-            AuthSession::where('record_id', $session->get('meta')->get('_id'))
+            AuthSession::where('record_id', $session->meta->_id)
                 ->where('collection_id', $collection->id)
                 ->delete();
         }

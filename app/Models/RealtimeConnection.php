@@ -13,6 +13,7 @@ class RealtimeConnection extends Model
         'socket_id',
         'channel_name',
         'filter',
+        'is_public',
         'last_seen_at',
     ];
 
@@ -20,6 +21,7 @@ class RealtimeConnection extends Model
     {
         return [
             'last_seen_at' => 'datetime',
+            'is_public' => 'boolean',
         ];
     }
 

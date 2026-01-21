@@ -7,6 +7,7 @@ use App\Models\RealtimeConnection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Services\EvaluateRuleExpression;
 
 class RealtimeController extends Controller
 {
@@ -23,11 +24,20 @@ class RealtimeController extends Controller
             'collection' => 'Collection not found',
         ]);
 
-        // @TODO implement authorizatio check
+        $listRule = $collection->api_rules['list'] ?? 'SUPERUSER_ONLY';
+        $allowPublic = app(EvaluateRuleExpression::class)
+            ->forExpression($listRule)
+            ->allowsGuest();
 
+        if (!$allowPublic && !$request->user()) {
+            return response()->json([
+                'message' => 'Unauthenticated.'
+            ], 401);
+        }
+
+        $filter = $validated['filter'] ?? '';
         $channelName = (string) Str::uuid();
-
-        $recordId = null;
+        $recordId = $request->user()?->meta?->_id;
 
         RealtimeConnection::create([
             'project_id' => $collection->project_id,
@@ -35,14 +45,16 @@ class RealtimeController extends Controller
             'record_id' => $recordId,
             'socket_id' => $validated['socket_id'] ?? null,
             'channel_name' => $channelName,
-            'filter' => $validated['filter'],
+            'filter' => $filter,
+            'is_public' => $allowPublic,
             'last_seen_at' => now(),
         ]);
 
         $prefix = config('larabase.realtime_channel_prefix');
-
+        $channelName = $prefix.$channelName;
         return response()->json([
-            'channel_name' => $prefix.$channelName,
+            'channel_name' => $channelName,
+            'is_public' => $allowPublic,
         ]);
     }
 

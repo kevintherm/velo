@@ -46,7 +46,7 @@ class RealtimeBroadcastingTest extends TestCase
             'project_id' => $project->id,
             'collection_id' => $collection->id,
             'channel_name' => 'uuid-active-sub',
-            'filters' => ['status' => 'active'],
+            'filter' => 'status = active',
             'last_seen_at' => now(),
         ]);
 
@@ -80,7 +80,7 @@ class RealtimeBroadcastingTest extends TestCase
             'project_id' => $project->id,
             'collection_id' => $collection->id,
             'channel_name' => 'uuid-active-sub',
-            'filters' => ['status' => 'active'],
+            'filter' => 'status = active',
             'last_seen_at' => now(),
         ]);
 

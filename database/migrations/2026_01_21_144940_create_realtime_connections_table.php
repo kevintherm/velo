@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('socket_id')->nullable();
             $table->uuid('channel_name')->unique();
             $table->string('filter')->nullable();
+            $table->boolean('is_public')->default(false);
             $table->timestamp('last_seen_at');
             $table->timestamps();
 

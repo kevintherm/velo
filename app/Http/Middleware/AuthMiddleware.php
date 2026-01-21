@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Entity\SafeCollection;
 use App\Models\AuthSession;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,7 +21,7 @@ class AuthMiddleware
         }
 
         $hash = hash('sha256', $token);
-        
+
         $this->session = AuthSession::query()
             ->join('records', function ($join) {
                 $join->on('records.id', '=', 'auth_sessions.record_id')
@@ -46,13 +47,13 @@ class AuthMiddleware
 
         $recordData = json_decode($this->session->user, true);
 
-        $request->setUserResolver(fn() => collect([
+        $request->setUserResolver(fn() => new SafeCollection([
             ...$recordData,
-            'meta' => collect([
+            'meta' => [
                 '_id' => $this->session->record_id,
                 'collection_id' => $this->session->collection_id,
                 'project_id' => $this->session->project_id,
-            ]),
+            ],
         ]));
 
         return $next($request);
@@ -84,6 +85,6 @@ class AuthMiddleware
 
     private function handleGuest($request): void
     {
-        $request->setUserResolver(fn() => collect());
+        $request->setUserResolver(fn() => null);
     }
 }

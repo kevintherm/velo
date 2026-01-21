@@ -7,6 +7,7 @@ use App\Enums\FieldType;
 use App\Models\Collection;
 use App\Models\CollectionField;
 use App\Models\Project;
+use App\Models\Record;
 use App\Models\User;
 use Illuminate\Support\Str;
 
@@ -55,6 +56,17 @@ class Helper
             'email' => $superuserEmail,
             'password' => $superuserPassword,
         ]);
+
+        foreach(range(1, 10) as $i) {
+            Record::create([
+                'collection_id' => $userCollection->id,
+                'data' => [
+                    'name' => fake()->name(),
+                    'email' => fake()->email(),
+                    'password' => 'password',
+                ]
+            ]);
+        }
 
         \DB::commit();
 

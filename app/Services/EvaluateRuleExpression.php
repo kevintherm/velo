@@ -61,7 +61,7 @@ class EvaluateRuleExpression
             $parts = explode('.', $path);
 
             // Navigate through context using dot notation
-            $value = $this->context['sys_'.$parts[0]] ?? null;
+            $value = $this->context['sys_' . $parts[0]] ?? null;
             for ($i = 1; $i < count($parts); $i++) {
                 if ($value === null) {
                     break;
@@ -80,7 +80,7 @@ class EvaluateRuleExpression
                 return '""';
             }
 
-            return '"'.str_replace('"', '\\"', (string) $value).'"';
+            return '"' . str_replace('"', '\\"', (string) $value) . '"';
         }, $result);
 
         // Flip expressions where quoted value is on the left side (e.g., "val" = field -> field = "val")
@@ -122,5 +122,38 @@ class EvaluateRuleExpression
         }
 
         return (bool) $this->expressionLanguage->evaluate($expression, $this->context);
+    }
+
+    /**
+     * Check if the rule allows guest (unauthenticated) access.
+     * Fast path: if rule does not reference @request.auth, guests can't access.
+     */
+    public function allowsGuest(): bool
+    {
+        $expression = $this->expression ?? '';
+
+        if (!str_contains($expression, '@request.auth')) {
+            return true;
+        }
+
+        try {
+            return $this->withContext([
+                'sys_request' => (object) ['auth' => null],
+            ])->evaluate();
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    public static function contextFrom($request): array
+    {
+        return [
+            'sys_request' => (object) [
+                'auth' => $request->user(),
+                'body' => $request->post(),
+                'param' => $request->route()->parameters(),
+                'query' => $request->query(),
+            ],
+        ];
     }
 }

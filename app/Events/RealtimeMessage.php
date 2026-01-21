@@ -5,7 +5,6 @@ namespace App\Events;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -16,15 +15,16 @@ class RealtimeMessage implements ShouldBroadcastNow
 
     public function __construct(
         public string $channelName,
-        public array $payload
+        public array $payload,
+        public bool $isPublic = false,
     ) {}
 
     public function broadcastOn(): array
     {
         $prefix = config('larabase.realtime_channel_prefix');
-        
+        $channelName = $prefix.$this->channelName;
         return [
-            new Channel($prefix.$this->channelName),
+            $this->isPublic ? new Channel($channelName) : new PrivateChannel($channelName),
         ];
     }
 
