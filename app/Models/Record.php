@@ -7,6 +7,7 @@ use App\Enums\FieldType;
 use Illuminate\Support\Str;
 use App\Services\RealtimeService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use App\Exceptions\InvalidRecordException;
 use App\Collections\Handlers\CollectionTypeHandlerResolver;
 
@@ -19,6 +20,18 @@ class Record extends Model
         return [
             'data' => AsSafeCollection::class
         ];
+    }
+
+    protected function documentId(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->data->get('id'),
+            set: function ($value) {
+                $data = $this->data;
+                $data->put('id', $value);
+                return ['data' => $data];
+            }
+        );
     }
 
     public function collection()
@@ -46,11 +59,11 @@ class Record extends Model
             $fields = $record->collection->fields->keyBy('name');
             $fieldNames = $fields->keys()->sort()->values()->toArray();
 
-            if (! $record->data->has('id') || empty($record->data->get('id'))) {
+            if (empty($record->documentId)) {
                 $min = $fields['id']->options->minLength ?? 16;
                 $max = $fields['id']->options->maxLength ?? 16;
                 $length = random_int($min, $max);
-                $record->data->put('id', Str::random($length));
+                $record->documentId = Str::random($length);
             }
 
             // Prevent data loss on update

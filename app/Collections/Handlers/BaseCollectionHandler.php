@@ -58,7 +58,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
 
         $relationFields = $record->collection->fields()->where('type', FieldType::Relation)->get();
         $data = $record->data;
-        $recordId = $data->get('id');
+        $recordId = $record->documentId;
 
         // Delete existing indexes for this record
         RecordIndex::where('collection_id', $record->collection_id)
@@ -100,7 +100,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
     {
         $indexData = [
             'collection_id' => $record->collection_id,
-            'record_id' => $record->data->get('id'),
+            'record_id' => $record->documentId,
             'field' => $field->name,
             'value_string' => null,
             'value_number' => null,
@@ -121,7 +121,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
     {
         $collection = $record->collection;
         $data = $record->data;
-        $recordId = $data->get('id');
+        $recordId = $record->documentId;
 
         // Find all record_indexes from OTHER collections where this record's ID is the value
         // (meaning other records reference this record via a relation field)

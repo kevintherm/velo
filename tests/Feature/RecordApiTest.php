@@ -117,7 +117,7 @@ class RecordApiTest extends TestCase
             'data' => ['title' => 'Post 1', 'content' => 'Content 1', 'user_id' => 'user1'],
         ]);
 
-        $response = $this->getJson("/api/collections/posts/records/{$record->data->get('id')}");
+        $response = $this->getJson("/api/collections/posts/records/{$record->documentId}");
 
         $response->assertStatus(200)
             ->assertJsonPath('data.title', 'Post 1');
@@ -131,7 +131,7 @@ class RecordApiTest extends TestCase
         ]);
 
         // No auth header = no owner
-        $response = $this->putJson("/api/collections/posts/records/{$record->data->get('id')}", [
+        $response = $this->putJson("/api/collections/posts/records/{$record->documentId}", [
             'title' => 'Updated Title',
         ]);
 
@@ -145,7 +145,7 @@ class RecordApiTest extends TestCase
             'data' => ['title' => 'Post 1', 'content' => 'Content 1', 'user_id' => 'user1'],
         ]);
 
-        $response = $this->deleteJson("/api/collections/posts/records/{$record->data->get('id')}");
+        $response = $this->deleteJson("/api/collections/posts/records/{$record->documentId}");
 
         $response->assertStatus(403);
     }

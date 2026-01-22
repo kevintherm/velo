@@ -1,7 +1,6 @@
 BUG:
 
 IMPROVEMENT:
-- unify record.id and record.data.id, append record.id as record.data.id
 - create api middleware for guest and authenticated
 - add 2fa, mfa, oauth
 - request reauthentication when changing identifiers or password for auth type collection
