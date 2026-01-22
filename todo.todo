@@ -1,12 +1,20 @@
 BUG:
 
-IMPROVEMENT:
-- create api middleware for guest and authenticated
-- add 2fa, mfa, oauth
+TODO:
+- add realtime subscribe for singular record
+- store project settings in database, use settings page rn (single tenant)
 - request reauthentication when changing identifiers or password for auth type collection
 - fix file type validation
 - refactor file handling
 - add auto generate thumbnail feature for created lifecycle
 - add options to remove all created realtime connections when updating the collection list or view rule
+- add extension bus to extend app hooks
+- create documentations
+- deploy
+
+IMPROVEMENT:
+- add 2fa, mfa, oauth
+- add migration system for programmatic schema changes
+- add export and import feature
 - add js n dart sdk
 - check @TODO(s)
