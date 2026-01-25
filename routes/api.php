@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
  * !IMPORTANT: Request MUST send Accept headers of application/json when using laravel validation else laravel will throw a web 404 response.
  */
 Route::prefix('collections/{collection:name}')->group(function () {
-    Route::prefix('/auth')->middleware(['throttle:60,1'])->name('auth.')->group(function () {
+    Route::prefix('/auth')->middleware(['throttle:dynamic-api'])->name('auth.')->group(function () {
         Route::post('/authenticate-with-password', [AuthController::class, 'authenticateWithPassword'])->name('authenticate-with-password');
         Route::get('/me', [AuthController::class, 'me'])->name('me');
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

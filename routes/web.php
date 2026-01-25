@@ -21,6 +21,7 @@ Route::prefix('_')->group(function () {
         Route::livewire('system/sessions', 'pages::manage-auth-sessions')->name('system.sessions');
         Route::livewire('system/otps', 'pages::manage-otps')->name('system.otps');
         Route::livewire('system/password-resets', 'pages::manage-password-resets')->name('system.password.resets');
+        Route::livewire('system/settings', 'pages::settings')->name('system.settings');
         Route::redirect('system/logs', '/_/pulse')->name('system.logs');
 
         Route::livewire('collections/{collection:name}', 'pages::collection')->name('collections');

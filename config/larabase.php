@@ -3,6 +3,12 @@
 return [
 
     /**
+     * App config cache TTL
+     * used for settings like: TrustProxies, etc
+     */
+    'cache_ttl' => env('CACHE_TTL', 3600),
+
+    /**
      * Prefix for realtime channels
      */
     'realtime_channel_prefix' => 'larabase.realtime.',

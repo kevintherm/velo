@@ -82,7 +82,7 @@ class CustomMain extends Component
                                             <x-theme-toggle darkTheme="dark" lightTheme="light" />
                                         </div>
                                         <x-menu-item icon="lucide.chart-line" title="Logs" link="{{ route('system.logs') }}" no-wire-navigate />
-                                        <x-menu-item icon="lucide.settings-2" title="Settings" />
+                                        <x-menu-item icon="lucide.settings-2" title="Settings" link="{{ route('system.settings') }}" />
                                         <x-mary-menu-item
                                             @click="toggle"
                                             icon="{{ $sidebar->attributes['collapse-icon'] ?? $collapseIcon }}"
