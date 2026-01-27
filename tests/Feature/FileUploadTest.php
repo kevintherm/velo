@@ -3,21 +3,20 @@
 namespace Tests\Feature;
 
 use App\Enums\CollectionType;
-use App\Models\Collection;
-use App\Models\Record;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Tests\TestCase;
 use App\Enums\FieldType;
+use App\Models\Collection;
 use App\Models\CollectionField;
 use App\Models\Project;
+use App\Models\Record;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
 
 class FileUploadTest extends TestCase
 {
     use \Illuminate\Foundation\Testing\RefreshDatabase;
-    
+
     public function test_file_upload_process_and_persistence()
     {
         Storage::fake('local');
@@ -28,7 +27,7 @@ class FileUploadTest extends TestCase
         $this->actingAs($user);
 
         $project = Project::create([
-            'name' => 'Test'
+            'name' => 'Test',
         ]);
 
         $collection = Collection::create([
@@ -43,15 +42,15 @@ class FileUploadTest extends TestCase
                 'type' => FieldType::File,
                 'order' => 1,
                 'required' => false,
-                'options' => []
-            ]
+                'options' => [],
+            ],
         ]));
 
         // 2. Test Temporary Upload (FileUploadController)
         $file = UploadedFile::fake()->create('test-document.pdf', 100);
-        
+
         $response = $this->postJson(route('uploads.process'), [
-            'document' => $file
+            'document' => $file,
         ]);
 
         $response->assertStatus(200);
@@ -63,8 +62,8 @@ class FileUploadTest extends TestCase
         $recordData = [
             'collection_id' => $collection->id,
             'data' => [
-                'document' => [$tempPath] // Frontend sends array of temp paths
-            ]
+                'document' => [$tempPath], // Frontend sends array of temp paths
+            ],
         ];
 
         $record = Record::create($recordData);
@@ -72,7 +71,7 @@ class FileUploadTest extends TestCase
 
         // Verify file was moved
         // $expectedPath = "collections/{$collection->id}/{$recordId}/test-document.pdf";
-        
+
         $files = $record->fresh()->data->get('document');
         $this->assertIsArray($files);
         $this->assertCount(1, $files);
@@ -84,7 +83,7 @@ class FileUploadTest extends TestCase
         $this->assertArrayHasKey('url', $fileObject);
 
         $expectedPath = "collections/{$collection->id}/{$fileObject['uuid']}.pdf";
-        
+
         // Ensure the file is actually there using Storage facade which works with faked storage
         Storage::disk('public')->assertExists($expectedPath);
     }

@@ -49,7 +49,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
         // Handle File Uploads
         $fileFields = $fields->filter(fn ($field) => $field->type === FieldType::File);
         $fileUploadService = app(\App\Services\HandleFileUpload::class)->forCollection($record->collection);
-        
+
         foreach ($fileFields as $field) {
             $value = $data->get($field->name);
             if (empty($value)) {
@@ -64,6 +64,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
                 // Check if it's an existing file object (array with uuid)
                 if (is_array($file) && isset($file['uuid'])) {
                     $processedFiles[] = $file;
+
                     continue;
                 }
 
@@ -74,9 +75,11 @@ class BaseCollectionHandler implements CollectionTypeHandler
                 }
 
                 $processed = $fileUploadService->save();
-                if ($processed) $processedFiles[] = $processed;
+                if ($processed) {
+                    $processedFiles[] = $processed;
+                }
             }
-            
+
             $data->put($field->name, $processedFiles);
         }
 

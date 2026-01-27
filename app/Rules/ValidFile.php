@@ -28,17 +28,20 @@ class ValidFile implements ValidationRule
             }
 
             $fail('The :attribute contains invalid file data.');
+
             return;
         }
 
         if ($value instanceof UploadedFile) {
             $this->validateUploadedFile($value, $fail);
+
             return;
         }
 
         if (is_string($value)) {
             if (Str::startsWith($value, 'tmp/')) {
                 $this->validateTempFile($value, $fail);
+
                 return;
             }
 
@@ -50,16 +53,16 @@ class ValidFile implements ValidationRule
     {
         $rules = [];
 
-        if (!empty($this->options->allowedMimeTypes)) {
-            $rules[] = 'mimetypes:' . implode(',', $this->options->allowedMimeTypes);
+        if (! empty($this->options->allowedMimeTypes)) {
+            $rules[] = 'mimetypes:'.implode(',', $this->options->allowedMimeTypes);
         }
 
         if ($this->options->maxSize) {
-            $rules[] = 'max:' . ceil($this->options->maxSize / 1024);
+            $rules[] = 'max:'.ceil($this->options->maxSize / 1024);
         }
 
         if ($this->options->minSize) {
-            $rules[] = 'min:' . floor($this->options->minSize / 1024);
+            $rules[] = 'min:'.floor($this->options->minSize / 1024);
         }
 
         $validator = Validator::make(['file' => $file], ['file' => $rules]);
@@ -73,15 +76,16 @@ class ValidFile implements ValidationRule
 
     protected function validateTempFile(string $path, Closure $fail): void
     {
-        if (!Storage::disk('local')->exists($path)) {
+        if (! Storage::disk('local')->exists($path)) {
             $fail('The temporary file does not exist or has expired.');
+
             return;
         }
 
-        if (!empty($this->options->allowedMimeTypes)) {
+        if (! empty($this->options->allowedMimeTypes)) {
             $mime = Storage::disk('local')->mimeType($path);
-            if (!in_array($mime, $this->options->allowedMimeTypes)) {
-                $fail("The file must be a file of type: " . implode(', ', $this->options->allowedMimeTypes) . ".");
+            if (! in_array($mime, $this->options->allowedMimeTypes)) {
+                $fail('The file must be a file of type: '.implode(', ', $this->options->allowedMimeTypes).'.');
             }
         }
 

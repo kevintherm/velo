@@ -14,23 +14,26 @@ class HandleFileUpload
 
     protected Filesystem $storage;
 
-    protected UploadedFile|null $fromUpload = null;
-    protected string|null  $fromTmp = null;
+    protected ?UploadedFile $fromUpload = null;
+
+    protected ?string $fromTmp = null;
 
     public function __construct()
     {
-        $this->storage = Storage::disk("public");
+        $this->storage = Storage::disk('public');
     }
 
     public function setDisk(Filesystem $disk): self
     {
         $this->storage = $disk;
+
         return $this;
     }
 
     public function forCollection(\App\Models\Collection $collection): self
     {
         $this->collection = $collection;
+
         return $this;
     }
 
@@ -38,6 +41,7 @@ class HandleFileUpload
     {
         $this->fromUpload = $file;
         $this->fromTmp = null;
+
         return $this;
     }
 
@@ -45,23 +49,24 @@ class HandleFileUpload
     {
         $this->fromTmp = $path;
         $this->fromUpload = null;
+
         return $this;
     }
 
-    public function save(): FileObject|null
+    public function save(): ?FileObject
     {
-        if (!$this->fromUpload && !$this->fromTmp) {
+        if (! $this->fromUpload && ! $this->fromTmp) {
             throw new \RuntimeException('No file source provided.');
         }
 
         $uuid = Str::uuid()->toString();
-        
+
         if ($this->fromUpload) {
             $extension = $this->fromUpload->getClientOriginalExtension();
             $mimeType = $this->fromUpload->getMimeType();
             $sourceContent = $this->fromUpload->get();
         } else {
-            if (!Storage::disk('local')->exists($this->fromTmp)) {
+            if (! Storage::disk('local')->exists($this->fromTmp)) {
                 return null;
             }
 
@@ -72,7 +77,7 @@ class HandleFileUpload
 
         $path = "collections/{$this->collection->id}/{$uuid}.{$extension}";
         $this->storage->put($path, $sourceContent);
-        $url = "storage/".$path;
+        $url = 'storage/'.$path;
 
         $isPreviewable = Str::startsWith($mimeType, 'image/');
 
@@ -86,7 +91,7 @@ class HandleFileUpload
     }
 
     /**
-     * @param array<UploadedFile|string> $files
+     * @param  array<UploadedFile|string>  $files
      * @return array<FileObject>
      */
     public function saveMany(array $files): array
@@ -100,6 +105,7 @@ class HandleFileUpload
             }
             $results[] = $this->save();
         }
+
         return $results;
     }
 }

@@ -15,17 +15,17 @@ class ValidFileTest extends TestCase
     {
         $rule = new ValidFile($options);
         $validator = Validator::make(['file' => $value], ['file' => [$rule]]);
-        
+
         if ($validator->fails()) {
             dump($validator->errors()->all());
         }
-        
+
         return $validator->passes();
     }
 
     public function test_validates_existing_file_array()
     {
-        $options = new FileFieldOption();
+        $options = new FileFieldOption;
         $this->assertTrue($this->validate(['uuid' => 'some-uuid', 'url' => 'some-url'], $options));
         $this->assertFalse($this->validate(['wrong' => 'structure'], $options));
     }
@@ -33,13 +33,13 @@ class ValidFileTest extends TestCase
     public function test_validates_uploaded_file()
     {
         $options = new FileFieldOption(allowedMimeTypes: ['image/jpeg'], maxSize: 1024 * 1024); // 1MB
-        
+
         $file = UploadedFile::fake()->image('test.jpg')->size(500); // 500KB
         $this->assertTrue($this->validate($file, $options));
 
         $fileTooBig = UploadedFile::fake()->image('big.jpg')->size(2000); // 2MB
         $this->assertFalse($this->validate($fileTooBig, $options));
-        
+
         $wrongMime = UploadedFile::fake()->create('doc.pdf', 500, 'application/pdf');
         $this->assertFalse($this->validate($wrongMime, $options));
     }
@@ -47,12 +47,12 @@ class ValidFileTest extends TestCase
     public function test_validates_temp_file_path()
     {
         Storage::fake('local');
-        
+
         $options = new FileFieldOption(allowedMimeTypes: ['text/plain'], maxSize: 1024);
 
         $path = 'tmp/test.txt';
         Storage::disk('local')->put($path, 'content');
-        
+
         $this->assertTrue($this->validate($path, $options));
 
         // Test missing file

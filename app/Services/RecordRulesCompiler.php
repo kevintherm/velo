@@ -99,11 +99,12 @@ class RecordRulesCompiler
             if ($field->type === FieldType::File) {
                 $rules[$prefix.$field->name] = ['array'];
                 if ($field->required) {
-                   $rules[$prefix.$field->name][] = 'required';
-                   $rules[$prefix.$field->name][] = 'min:1';
+                    $rules[$prefix.$field->name][] = 'required';
+                    $rules[$prefix.$field->name][] = 'min:1';
                 }
-                
+
                 $rules[$prefix.$field->name.'.*'] = $fieldRules;
+
                 continue;
             }
 

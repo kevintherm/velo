@@ -2,10 +2,6 @@
 
 namespace App\Entity;
 
-use Illuminate\Http\File;
-use Illuminate\Support\Str;
-use Illuminate\Http\UploadedFile;
-
 class FileObject implements \JsonSerializable
 {
     public function __construct(
@@ -14,8 +10,7 @@ class FileObject implements \JsonSerializable
         public bool $is_previewable,
         public string $mime_type,
         public string $extension,
-    ) {
-    }
+    ) {}
 
     public function toArray(): array
     {

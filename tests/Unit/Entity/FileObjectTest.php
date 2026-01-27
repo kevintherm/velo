@@ -3,7 +3,6 @@
 namespace Tests\Unit\Entity;
 
 use App\Entity\FileObject;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -26,7 +25,7 @@ class FileObjectTest extends TestCase
         $this->assertEquals('image/jpeg', $fileObject->mime_type);
         $this->assertEquals('jpg', $fileObject->extension);
     }
-    
+
     public function test_it_can_be_serialized_to_array()
     {
         $uuid = Str::uuid()->toString();
