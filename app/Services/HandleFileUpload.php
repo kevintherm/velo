@@ -57,7 +57,7 @@ class HandleFileUpload
         $filename = $extension ? "{$uuid}.{$extension}" : $uuid;
         $path = "collections/{$this->collection->id}/{$filename}";
         $this->storage->put($path, $sourceContent);
-        $url = 'storage/' . $path;
+        $url = 'storage/'.$path;
 
         $isPreviewable = Str::startsWith($mimeType, 'image/');
 
