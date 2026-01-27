@@ -14,6 +14,7 @@
         from {
             background-position: -1000px 0;
         }
+
         to {
             background-position: 1000px 0;
         }
@@ -41,7 +42,9 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 .mary-table-pagination {
-    button, span {
+
+    button,
+    span {
         @apply text-xs border-none
     }
 
@@ -49,11 +52,55 @@
         @apply cursor-pointer
     }
 
-    span[aria-current="page"] > span {
+    span[aria-current="page"]>span {
         @apply bg-base-content/5
     }
 
-    button, span[aria-current="page"] > span, span[aria-disabled="true"] span {
+    button, span[aria-current="page"]>span, span[aria-disabled="true"] span {
         @apply py-1 px-2
+    }
+}
+
+/* FilePond Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]):not(.light) .filepond--root {
+        border: 2px dashed color-mix(in srgb, var(--color-primary) 40%, transparent);
+        background: var(--fallback-b3, oklch(var(--b3))); /* Darker base */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    :root:not([data-theme="light"]):not(.light) .filepond--panel-root {
+        background-color: var(--fallback-b1, oklch(var(--b1))) !important; /* Lighter surface to "pop" */
+    }
+
+    :root:not([data-theme="light"]):not(.light) .filepond--drop-label {
+        color: var(--fallback-bc, oklch(var(--bc)));
+    }
+}
+
+/* Selector-based Dark Mode (data-theme="dark" or .dark) */
+html[data-theme="dark"] .filepond--root,
+html.dark .filepond--root {
+    background: var(--fallback-b3, oklch(var(--b3)));
+    @apply rounded;
+}
+
+html[data-theme="dark"] .filepond--panel-root,
+html.dark .filepond--panel-root {
+    background-color: var(--fallback-b1, oklch(var(--b1))) !important;
+}
+
+html[data-theme="dark"] .filepond--drop-label,
+html.dark .filepond--drop-label {
+    color: var(--fallback-bc, oklch(var(--bc)));
+}
+
+/* Improved visibility for uploaded items in dark mode */
+html[data-theme="dark"] .filepond--item,
+html.dark .filepond--item,
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]):not(.light) .filepond--item {
+        background-color: var(--fallback-b2, oklch(var(--b2)));
+        border: 1px solid var(--fallback-b3, oklch(var(--b3)));
     }
 }

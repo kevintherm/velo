@@ -7,6 +7,7 @@ use App\Exceptions\InvalidRecordException;
 use App\Models\CollectionField;
 use App\Models\Record;
 use App\Models\RecordIndex;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Collection;
 
 class BaseCollectionHandler implements CollectionTypeHandler
@@ -68,11 +69,11 @@ class BaseCollectionHandler implements CollectionTypeHandler
                     continue;
                 }
 
-                if ($file instanceof \Illuminate\Http\UploadedFile) {
-                    $fileUploadService->fromUpload($file);
-                } elseif (is_string($file)) {
-                    $fileUploadService->fromTmp($file);
+                if (! $file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile) {
+                    continue;
                 }
+
+                $fileUploadService->fromUpload($file);
 
                 $processed = $fileUploadService->save();
                 if ($processed) {
@@ -81,6 +82,11 @@ class BaseCollectionHandler implements CollectionTypeHandler
             }
 
             $data->put($field->name, $processedFiles);
+
+            $this->deleteRemovedFiles(
+                oldValue: $originalData[$field->name] ?? [],
+                newValue: $processedFiles,
+            );
         }
 
         $record->data = $data;
@@ -130,6 +136,32 @@ class BaseCollectionHandler implements CollectionTypeHandler
         RecordIndex::insert($indexToInsert);
 
         \DB::commit();
+    }
+
+    private function deleteRemovedFiles(mixed $oldValue, mixed $newValue): void
+    {
+        $normalize = function ($item) {
+            if (is_string($item)) {
+                return $item;
+            }
+
+            if (is_array($item) && isset($item['url'])) {
+                return $item['url'];
+            }
+
+            return null;
+        };
+
+        $old = array_filter(array_map($normalize, (array) $oldValue));
+        $new = array_filter(array_map($normalize, (array) $newValue));
+
+        $toDelete = array_diff($old, $new);
+
+        foreach ($toDelete as $url) {
+            // Stored url is like "storage/collections/...", strip the public prefix.
+            $path = str_starts_with($url, 'storage/') ? substr($url, 8) : $url;
+            Storage::disk('public')->delete($path);
+        }
     }
 
     private function makeRecordIndexData(Record $record, CollectionField $field, mixed $value): array

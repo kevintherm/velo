@@ -14,7 +14,7 @@ use App\Exceptions\InvalidRecordException;
 use App\Services\IndexStrategies\MysqlIndexStrategy;
 
 new class extends Component {
-    use Toast;
+    use Toast, WithFileUploads;
 
     public \App\Models\Collection $collection;
     public \App\Models\Collection $originalCollection;
@@ -176,8 +176,6 @@ new class extends Component {
 
     public function saveRecord(): void
     {
-        //        dd($this->all());
-
         $this->validateRecord();
 
         $recordId = $this->recordId;
@@ -185,39 +183,48 @@ new class extends Component {
 
         $record = $recordId ? $this->collection->records()->filter('id', '=', $recordId)->firstRaw() : null;
 
-        if ($record) {
-            unset($this->form['id_old']);
-            $record->update([
-                'data' => $this->form,
-            ]);
-        } else {
-            unset($this->form['id_old']);
-            $recordData = [
-                'collection_id' => $this->collection->id,
-                'data' => $this->form,
-            ];
+        $data = collect($this->form);
 
-            // Update record with file URLs if any were uploaded
-            if (collect($this->fields)->where('type', FieldType::File)->isNotEmpty()) {
-                $recordData['data'] = $this->form;
+        $fileFields = $this->fields->filter(fn($field) => $field->type === FieldType::File);
+        $fileUploadService = app(\App\Services\HandleFileUpload::class)->forCollection($record->collection ?? $this->collection);
+
+        foreach ($fileFields as $field) {
+            $value = $data->get($field->name);
+            if (empty($value)) {
+                continue;
             }
 
-            Record::create($recordData);
+            $files = is_array($value) ? $value : [$value];
+            $files = array_filter($files);
+            $processedFiles = [];
+
+            foreach ($files as $file) {
+                if (is_array($file) && isset($file['uuid'])) {
+                    $processedFiles[] = $file;
+
+                    continue;
+                }
+
+                if (!$file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile) {
+                    continue;
+                }
+
+                $processed = $fileUploadService->fromUpload($file)->save();
+
+                if ($processed) {
+                    $processedFiles[] = $processed;
+                }
+            }
+
+            $data->put($field->name, $processedFiles);
         }
+
+        Record::updateOrCreate(['id' => $record->id, 'collection_id' => $this->collection->id], ['data' => $data]);
 
         $this->showRecordDrawer = false;
         $this->dispatch('update-table');
 
-        foreach ($this->fields as $field) {
-            $this->form[$field->name] = $field->type === FieldType::Bool ? false : '';
-
-            //            if ($field->type === FieldType::File) {
-            //                $this->files[$field->name] = [];
-            //                $this->library[$field->name] = collect();
-            //            }
-        }
-
-        $this->success(title: 'Success!', description: "$status new {$this->collection->name} record", position: 'toast-bottom toast-end', timeout: 2000);
+        $this->success(title: 'Success!', description: "$status new {$this->collection->name} record");
     }
 
     public function openRelationPicker(string $fieldName): void
@@ -245,9 +252,21 @@ new class extends Component {
 ?>
 
 @assets
+    <link href="https://unpkg.com/filepond@^4/dist/filepond.css" rel="stylesheet" />
+    <link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css" rel="stylesheet" />
+    <script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
+    <script src="https://unpkg.com/filepond-plugin-file-validate-size/dist/filepond-plugin-file-validate-size.js"></script>
+    <script src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.js"></script>
+    <script src="https://unpkg.com/filepond@^4/dist/filepond.js"></script>
     <script src="https://cdn.tiny.cloud/1/{{ config('larabase.tinymce_key') }}/tinymce/6/tinymce.min.js"
         referrerpolicy="origin"></script>
 @endassets
+
+<script>
+    FilePond.registerPlugin(FilePondPluginImagePreview);
+    FilePond.registerPlugin(FilePondPluginFileValidateSize);
+    FilePond.registerPlugin(FilePondPluginFileValidateType);
+</script>
 
 <div>
     <livewire:dialogs.relation-picker />
@@ -344,6 +363,7 @@ new class extends Component {
                             <legend class="fieldset-legend">{{ $field->name }}</legend>
                             <div wire:ignore x-data="{
                                 model: $wire.entangle('form.{{ $field->name }}'),
+                                fieldOptions: JSON.parse('{{ json_encode($field->options) }}'),
                                 initFilePond() {
                                     let initialFiles = [];
                                     if (Array.isArray(this.model)) {
@@ -354,29 +374,67 @@ new class extends Component {
                                         }).filter(f => f);
                                     }
                             
+                                    const extraOpts = {};
+                                    extraOpts.allowMultiple = this.fieldOptions.multiple;
+                                    extraOpts.maxFiles = this.fieldOptions.maxFiles || 1;
+                                    extraOpts.acceptedFileTypes = this.fieldOptions.allowedMimeTypes;
+                                    if (this.fieldOptions.minSize) {
+                                        extraOpts.minFileSize = this.fieldOptions.minSize;
+                                    }
+                                    if (this.fieldOptions.maxSize) {
+                                        extraOpts.maxFileSize = this.fieldOptions.maxSize;
+                                    }
+                            
                                     FilePond.create($refs.input, {
                                         files: initialFiles,
                                         credits: false,
-                                        itemInsertInterval: 200,
                                         server: {
-                                            process: '{{ route('uploads.process') }}',
-                                            revert: '{{ route('uploads.revert') }}',
-                                            load: '{{ route('uploads.load') }}?source=',
-                                            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                                            process: (fieldName, file, metadata, load, error, progress, abort, transfer, options) => {
+                                                $wire.upload('form.{{ $field->name }}', file, load, error, progress);
+                                                return {
+                                                    abort: () => {
+                                                        $wire.cancelUpload('form.{{ $field->name }}');
+                            
+                                                        abort();
+                                                    }
+                                                };
+                                            },
+                                            load: (source, load, error, progress, abort) => {
+                                                fetch(`/${source}`)
+                                                    .then(response => {
+                                                        if (!response.ok) throw new Error('Failed to load file.');
+                                                        return response.blob();
+                                                    })
+                                                    .then(blob => {
+                                                        const name = source.split('/').pop() || 'file';
+                                                        load(new File([blob], name, { type: blob.type }));
+                                                    })
+                                                    .catch(err => error(err.message));
+                            
+                                                return {
+                                                    abort: () => abort(),
+                                                };
+                                            },
+                                            revert: (filename, load) => {
+                                                $wire.removeUpload('form.{{ $field->name }}', filename, load)
+                                            },
                                         },
-                                        onprocessfile: (error, file) => {
-                                            if (!error) {
-                                                this.model.push(file.serverId);
-                                            }
+                                        onremovefile: (err, file) => {
+                                            if (err) return;
+                            
+                                            const source = file?.source;
+                                            if (!source) return;
+                            
+                                            const normalize = (item) => {
+                                                if (typeof item === 'string') return item;
+                                                if (item && typeof item === 'object' && item.url) return item.url;
+                                                return null;
+                                            };
+                            
+                                            this.model = (this.model || []).filter((item) => normalize(item) !== source);
+                                            $wire.set('form.{{ $field->name }}', this.model);
                                         },
-                                        onremovefile: (error, file) => {
-                                            if (this.model) {
-                                                this.model = this.model.filter(item => {
-                                                    if (typeof item === 'string') return item !== file.serverId;
-                                                    return item.url !== file.serverId;
-                                                });
-                                            }
-                                        },
+                                        ...extraOpts,
                                     });
                                 }
                             }" x-init="initFilePond()">

@@ -24,7 +24,6 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "filepond-plugin-image-preview": "^4.6.12",
     "sortablejs": "^1.15.6"
   }
 }
