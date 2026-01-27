@@ -1,13 +1,9 @@
 BUG:
 
 TODO:
-- store project settings in database, use settings page rn (single tenant)
-- request reauthentication when changing identifiers or password for auth type collection
-- fix file type validation
-- refactor file handling
-- rename rules e.g RuleExpression -> ValidRuleExpression
+- add request change email verification
 - add auto generate thumbnail feature for created lifecycle
-- add options to remove all created realtime connections when updating the collection list or view rule
+- unify system migration files into a single reusable component
 - add extension bus to extend app hooks
 - create documentations
 - deploy

@@ -3,7 +3,7 @@
 namespace App\FieldOptions;
 
 use App\Contracts\CollectionFieldOption;
-use App\Rules\Domain;
+use App\Rules\ValidDomain;
 
 class EmailFieldOption implements CollectionFieldOption
 {
@@ -37,9 +37,9 @@ class EmailFieldOption implements CollectionFieldOption
     {
         return [
             'allowedDomains' => ['array'],
-            'allowedDomains.*' => ['string', new Domain],
+            'allowedDomains.*' => ['string', new ValidDomain],
             'blockedDomains' => ['array'],
-            'blockedDomains.*' => ['string', new Domain],
+            'blockedDomains.*' => ['string', new ValidDomain],
         ];
     }
 

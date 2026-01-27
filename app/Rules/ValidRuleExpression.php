@@ -6,7 +6,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 use Symfony\Component\ExpressionLanguage\SyntaxError;
 
-class RuleExpression implements ValidationRule
+class ValidRuleExpression implements ValidationRule
 {
     private $el;
 

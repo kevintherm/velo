@@ -5,7 +5,7 @@ use App\Enums\FieldType;
 use App\Exceptions\IndexOperationException;
 use App\Models\AuthPasswordReset;
 use App\Models\CollectionField;
-use App\Rules\RuleExpression;
+use App\Rules\ValidRuleExpression;
 use App\Services\IndexStrategies\MysqlIndexStrategy;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rules\Enum;
@@ -336,7 +336,7 @@ new class extends Component {
 
         $rules['collectionForm.name'] = ['required', 'regex:/^[a-zA-Z_]+$/', 'unique:collections,name,' . $this->collectionForm['id']];
 
-        $expressionRule = new RuleExpression([
+        $expressionRule = new ValidRuleExpression([
             'sys_request',
             ...$this->collection->fields->pluck('name'),
             'SUPERUSER_ONLY',

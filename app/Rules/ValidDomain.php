@@ -4,7 +4,7 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 
-class Domain implements ValidationRule
+class ValidDomain implements ValidationRule
 {
     /**
      * Run the validation rule.
