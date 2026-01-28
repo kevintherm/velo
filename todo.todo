@@ -5,8 +5,11 @@ TODO:
 - deploy
 
 IMPROVEMENT:
+- add verify email endpoint
+- validate apply hooks returned data.
 - add 2fa, mfa, oauth
 - add migration system for programmatic collection schema changes
 - add export and import feature
+- cache rule expression
 - add js n dart sdk
 - check @TODO(s)
