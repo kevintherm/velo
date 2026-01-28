@@ -28,6 +28,11 @@ class VeloServiceProvider extends ServiceProvider
             return;
         }
 
+        $strat = strtoupper(config('velo.sql_generated_column_strategy'));
+        if (! in_array($strat, ['STORED', 'VIRTUAL'])) {
+            throw new \Exception('Invalid SQL generated column strategy: '.$strat);
+        }
+
         // For now, hardcode project_id to 1. In a real multi-tenant app, this would come from the request/domain.
         $project_id = 1;
 

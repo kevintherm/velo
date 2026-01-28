@@ -67,10 +67,10 @@ class AuthMiddleware
             return;
         }
 
-        $threshold = config('larabase.session_defer_threshold') ?? 150;
+        $threshold = config('velo.session_defer_threshold') ?? 150;
 
         if ($this->session->last_used_at->diffInSeconds(now()) > $threshold) {
-            $sliding = config('larabase.session_sliding_expiration') ?? 0;
+            $sliding = config('velo.session_sliding_expiration') ?? 0;
 
             $newLastUsed = now();
             $newExpires = now()->addSeconds($sliding);

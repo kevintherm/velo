@@ -61,7 +61,7 @@ class RealtimeController extends Controller
             'socket_id' => $validated['socket_id'] ?? null,
         ]);
 
-        $prefix = config('larabase.realtime_channel_prefix');
+        $prefix = config('velo.realtime_channel_prefix');
         $channelName = $prefix.$channelName;
 
         return response()->json([

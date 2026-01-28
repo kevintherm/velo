@@ -21,7 +21,7 @@ class RealtimeMessage implements ShouldBroadcastNow
 
     public function broadcastOn(): array
     {
-        $prefix = config('larabase.realtime_channel_prefix');
+        $prefix = config('velo.realtime_channel_prefix');
         $channelName = $prefix.$this->channelName;
 
         return [

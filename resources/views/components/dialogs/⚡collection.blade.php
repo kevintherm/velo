@@ -70,8 +70,8 @@ new class extends Component {
                 ->toArray(),
         ];
 
-        $this->mimeTypes = config('larabase.available_mime_types');
-        $this->mimeTypePresets = config('larabase.mime_types_presets');
+        $this->mimeTypes = config('velo.available_mime_types');
+        $this->mimeTypePresets = config('velo.mime_types_presets');
     }
 
     #[On('show-collection')]

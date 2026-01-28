@@ -32,7 +32,7 @@ new class extends Component {
             return;
         }
 
-        $priority = config('larabase.relation_display_fields', ['email', 'name', 'title', 'slug', 'username']);
+        $priority = config('velo.relation_display_fields', ['email', 'name', 'title', 'slug', 'username']);
 
         $displayField = $collection->fields
             ->whereIn('name', $priority)

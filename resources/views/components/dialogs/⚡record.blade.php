@@ -36,7 +36,7 @@ new class extends Component {
         $this->collection = $collection;
         $this->fillFields();
         $this->fillRecordForm();
-        $this->tinyMceConfig = config('larabase.tinymce_config');
+        $this->tinyMceConfig = config('velo.tinymce_config');
     }
 
     public function resetRecordForm(): void
@@ -259,7 +259,7 @@ new class extends Component {
     <script src="https://unpkg.com/filepond-plugin-file-validate-size/dist/filepond-plugin-file-validate-size.js"></script>
     <script src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.js"></script>
     <script src="https://unpkg.com/filepond@^4/dist/filepond.js"></script>
-    <script src="https://cdn.tiny.cloud/1/{{ config('larabase.tinymce_key') }}/tinymce/6/tinymce.min.js"
+    <script src="https://cdn.tiny.cloud/1/{{ config('velo.tinymce_key') }}/tinymce/6/tinymce.min.js"
         referrerpolicy="origin"></script>
 @endassets
 
@@ -473,7 +473,7 @@ new class extends Component {
                                     @php
                                         $selectedIds = $form[$field->name] ?? [];
                                         $relatedCollection = \App\Models\Collection::find($field->options->collection);
-                                        $priority = config('larabase.relation_display_fields');
+                                        $priority = config('velo.relation_display_fields');
                                         $displayField = $relatedCollection->fields
                                             ->whereIn('name', $priority)
                                             ->sortBy(fn($field) => array_search($field->name, $priority))

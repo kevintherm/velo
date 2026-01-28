@@ -11,7 +11,7 @@ return [
     /**
      * Prefix for realtime channels
      */
-    'realtime_channel_prefix' => 'larabase.realtime.',
+    'realtime_channel_prefix' => 'velo.realtime.',
 
     /**
      * How long a realtime connection is considered stale

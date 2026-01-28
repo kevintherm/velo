@@ -15,7 +15,7 @@ new
     public function mount()
     {
         if (!Project::exists()) {
-            \App\Helper::initProject(); // @TODO: Remove on production
+            // \App\Helper::initProject(); // @TODO: Remove on production
             return $this->redirect(route('register'), navigate: true);
         }
     }

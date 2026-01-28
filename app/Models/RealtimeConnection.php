@@ -44,7 +44,7 @@ class RealtimeConnection extends Model
 
     public static function pruneStale()
     {
-        $threshold = config('larabase.realtime_connection_threshold') ?? 5;
+        $threshold = config('velo.realtime_connection_threshold') ?? 5;
         static::where('last_seen_at', '<', now()->subMinutes($threshold))->delete();
     }
 }

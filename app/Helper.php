@@ -4,6 +4,7 @@ namespace App;
 
 use App\Enums\CollectionType;
 use App\Enums\FieldType;
+use App\Models\AppConfig;
 use App\Models\Collection;
 use App\Models\CollectionField;
 use App\Models\Project;
@@ -22,6 +23,12 @@ class Helper
 
         $project = Project::create([
             'name' => 'Velo',
+        ]);
+
+        $appConfig = AppConfig::create([
+            'project_id' => $project->id,
+            'app_name' => 'Velo',
+            'app_url' => 'http://localhost'
         ]);
 
         $userCollection = Collection::create([
