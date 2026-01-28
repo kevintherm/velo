@@ -18,10 +18,11 @@ Route::prefix('_')->group(function () {
             return redirect()->route('collections', ['collection' => $collection]);
         })->name('home');
 
-        Route::livewire('system/superusers', 'pages::manage-superusers')->name('system.superusers');
-        Route::livewire('system/sessions', 'pages::manage-auth-sessions')->name('system.sessions');
-        Route::livewire('system/otps', 'pages::manage-otps')->name('system.otps');
-        Route::livewire('system/password-resets', 'pages::manage-password-resets')->name('system.password.resets');
+        Route::livewire('system/superusers', 'pages::manage-system-collection')->name('system.superusers');
+        Route::livewire('system/sessions', 'pages::manage-system-collection')->name('system.sessions');
+        Route::livewire('system/otps', 'pages::manage-system-collection')->name('system.otps');
+        Route::livewire('system/password-resets', 'pages::manage-system-collection')->name('system.password.resets');
+
         Route::livewire('system/settings', 'pages::settings')->name('system.settings');
         Route::livewire('system/logs', 'pages::logs')->name('system.logs');
 
