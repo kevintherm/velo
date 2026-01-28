@@ -172,7 +172,6 @@ new class extends Component {
             $attributes[$ruleName] = Str::lower(Str::headline($newName));
         }
 
-        dd($this->form);
         $this->validate($rules, [], $attributes);
     }
 
