@@ -2,14 +2,14 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Record;
-use App\Models\Project;
-use App\Models\Collection;
 use App\Entity\SafeCollection;
 use App\Enums\FieldType;
+use App\Models\Collection;
 use App\Models\CollectionField;
+use App\Models\Project;
+use App\Models\Record;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class HooksTest extends TestCase
 {
@@ -55,7 +55,8 @@ class HooksTest extends TestCase
     public function test_record_creating_hook()
     {
         \App\Facades\Hooks::on('record.creating', function ($data, $context) {
-            $data['slug'] = 'slug-' . $data['title'];
+            $data['slug'] = 'slug-'.$data['title'];
+
             return $data;
         });
 
@@ -99,6 +100,7 @@ class HooksTest extends TestCase
 
         \App\Facades\Hooks::on('record.retrieved', function ($data, $context) {
             $data['title'] = 'Modified Title';
+
             return $data;
         });
 
@@ -116,6 +118,7 @@ class HooksTest extends TestCase
 
         \App\Facades\Hooks::on('record.updating', function ($data, $context) {
             $data['slug'] = 'updated-slug';
+
             return $data;
         });
 
@@ -124,7 +127,7 @@ class HooksTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        
+
         $record->refresh();
         $this->assertEquals('updated-slug', $record->data['slug']);
     }
@@ -153,7 +156,7 @@ class HooksTest extends TestCase
             $this->assertEquals('posts', $context['collection']->name);
         });
 
-        $response = $this->postJson("/api/realtime/subscribe", [
+        $response = $this->postJson('/api/realtime/subscribe', [
             'collection' => 'posts',
         ]);
 

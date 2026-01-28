@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class RealtimeConnection extends Model
 {
     const UPDATED_AT = null;
+
     protected $fillable = [
         'project_id',
         'collection_id',

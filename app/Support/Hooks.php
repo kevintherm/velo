@@ -4,18 +4,10 @@ namespace App\Support;
 
 class Hooks
 {
-    /**
-     * @var array
-     */
     protected array $hooks = [];
 
     /**
      * Register a new hook.
-     *
-     * @param  string  $event
-     * @param  callable  $callback
-     * @param  int  $priority
-     * @return void
      */
     public function on(string $event, callable $callback, int $priority = 10): void
     {
@@ -34,11 +26,6 @@ class Hooks
 
     /**
      * Apply filter hooks to a value.
-     *
-     * @param  string  $event
-     * @param  mixed  $value
-     * @param  array  $context
-     * @return mixed
      */
     public function apply(string $event, mixed $value, array $context = []): mixed
     {
@@ -55,10 +42,6 @@ class Hooks
 
     /**
      * Trigger action hooks.
-     *
-     * @param  string  $event
-     * @param  array  $context
-     * @return void
      */
     public function trigger(string $event, array $context = []): void
     {

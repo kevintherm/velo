@@ -24,7 +24,9 @@ class VeloServiceProvider extends ServiceProvider
 
     private function bootTenantConfig(): void
     {
-        if (app()->runningInConsole() && !app()->runningUnitTests()) return;
+        if (app()->runningInConsole() && ! app()->runningUnitTests()) {
+            return;
+        }
 
         // For now, hardcode project_id to 1. In a real multi-tenant app, this would come from the request/domain.
         $project_id = 1;
@@ -43,7 +45,7 @@ class VeloServiceProvider extends ServiceProvider
         if ($config) {
             config([
                 'app.name' => $config->app_name,
-                'app.url' => $config->app_url
+                'app.url' => $config->app_url,
             ]);
         }
     }
