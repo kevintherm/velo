@@ -16,6 +16,9 @@ class HandleFileUpload
 
     protected ?UploadedFile $file = null;
 
+    protected ?string $tmpPath = null;
+    protected ?string $tmpDisk = 'local';
+
     public function __construct()
     {
         $this->storage = Storage::disk('public');
@@ -38,21 +41,37 @@ class HandleFileUpload
     public function fromUpload(UploadedFile $file): self
     {
         $this->file = $file;
+        $this->tmpPath = null;
+
+        return $this;
+    }
+
+    public function fromTmp(string $path, string $disk = 'local'): self
+    {
+        $this->tmpPath = $path;
+        $this->tmpDisk = $disk;
+        $this->file = null;
 
         return $this;
     }
 
     public function save(): ?FileObject
     {
-        if ($this->file === null) {
+        if ($this->file === null && $this->tmpPath === null) {
             throw new \RuntimeException('No file source provided.');
         }
 
         $uuid = Str::uuid()->toString();
 
-        $extension = $this->file->getClientOriginalExtension();
-        $mimeType = $this->file->getMimeType();
-        $sourceContent = $this->file->get();
+        if ($this->file) {
+            $extension = $this->file->getClientOriginalExtension();
+            $mimeType = $this->file->getMimeType();
+            $sourceContent = $this->file->get();
+        } else {
+            $sourceContent = Storage::disk($this->tmpDisk)->get($this->tmpPath);
+            $mimeType = Storage::disk($this->tmpDisk)->mimeType($this->tmpPath);
+            $extension = pathinfo($this->tmpPath, PATHINFO_EXTENSION);
+        }
 
         $filename = $extension ? "{$uuid}.{$extension}" : $uuid;
         $path = "collections/{$this->collection->id}/{$filename}";
@@ -62,6 +81,7 @@ class HandleFileUpload
         $isPreviewable = Str::startsWith($mimeType, 'image/');
 
         $this->file = null;
+        $this->tmpPath = null;
 
         return new FileObject(
             uuid: $uuid,
@@ -73,19 +93,20 @@ class HandleFileUpload
     }
 
     /**
-     * @param  array<UploadedFile>  $files
+     * @param  array<UploadedFile|string>  $files
      * @return array<FileObject>
      */
     public function saveMany(array $files): array
     {
         $results = [];
         foreach ($files as $file) {
-            if (! $file instanceof UploadedFile) {
-                continue;
+            if ($file instanceof UploadedFile) {
+                $this->fromUpload($file);
+                $results[] = $this->save();
+            } elseif (is_string($file)) {
+                $this->fromTmp($file);
+                $results[] = $this->save();
             }
-
-            $this->fromUpload($file);
-            $results[] = $this->save();
         }
 
         return $results;

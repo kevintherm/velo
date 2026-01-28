@@ -52,6 +52,15 @@ class RealtimeController extends Controller
             'last_seen_at' => now(),
         ]);
 
+        // Hook: realtime.connecting
+        \App\Facades\Hooks::trigger('realtime.connecting', [
+            'collection' => $collection,
+            'record_id' => $recordId,
+            'channel_name' => $channelName,
+            'filter' => $filter,
+            'socket_id' => $validated['socket_id'] ?? null,
+        ]);
+
         $prefix = config('larabase.realtime_channel_prefix');
         $channelName = $prefix.$channelName;
 

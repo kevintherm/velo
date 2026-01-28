@@ -116,6 +116,15 @@ class AuthController extends Controller
             }
         }
 
+        // Hook: auth.login
+        \App\Facades\Hooks::trigger('auth.login', [
+            'collection' => $collection,
+            'record' => $record->data->toArray(),
+            'record_id' => $record->id,
+            'token' => $token,
+            'ip_address' => $request->ip(),
+        ]);
+
         return response()->json([
             'message' => 'Authenticated.',
             'data' => $token,
@@ -162,6 +171,13 @@ class AuthController extends Controller
             ->where('token_hash', $hashedToken)
             ->delete();
 
+        // Hook: auth.logout
+        \App\Facades\Hooks::trigger('auth.logout', [
+            'collection' => $collection,
+            'record_id' => $session->meta->_id,
+            'token' => $token,
+        ]);
+
         return response()->json(['message' => 'Logged out.']);
     }
 
@@ -179,6 +195,13 @@ class AuthController extends Controller
         AuthSession::where('record_id', $session->meta->_id)
             ->where('collection_id', $collection->id)
             ->delete();
+
+        // Hook: auth.logout
+        \App\Facades\Hooks::trigger('auth.logout', [
+            'collection' => $collection,
+            'record_id' => $session->meta->_id,
+            'all_sessions' => true,
+        ]);
 
         return response()->json(['message' => 'Logged out from all sessions.']);
     }
@@ -217,6 +240,14 @@ class AuthController extends Controller
                 ->where('collection_id', $collection->id)
                 ->delete();
         }
+
+        // Hook: auth.password_reset
+        \App\Facades\Hooks::trigger('auth.password_reset', [
+            'collection' => $collection,
+            'record' => $record->data->toArray(),
+            'record_id' => $record->id,
+            'by_admin' => false,
+        ]);
 
         return response()->json(['message' => 'Password has been reset.']);
     }
@@ -311,6 +342,15 @@ class AuthController extends Controller
                 ->where('collection_id', $collection->id)
                 ->delete();
         }
+
+        // Hook: auth.password_reset
+        \App\Facades\Hooks::trigger('auth.password_reset', [
+            'collection' => $collection,
+            'record' => $record->data->toArray(),
+            'record_id' => $record->id,
+            'by_admin' => false,
+            'via_otp' => true,
+        ]);
 
         return response()->json(['message' => 'Password reset successful.']);
     }

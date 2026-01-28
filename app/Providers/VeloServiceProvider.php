@@ -19,11 +19,12 @@ class VeloServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->bootTenantConfig();
+        $this->loadHooks();
     }
 
     private function bootTenantConfig(): void
     {
-        if (app()->runningInConsole()) return;
+        if (app()->runningInConsole() && !app()->runningUnitTests()) return;
 
         // For now, hardcode project_id to 1. In a real multi-tenant app, this would come from the request/domain.
         $project_id = 1;
@@ -97,5 +98,16 @@ class VeloServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\RateLimiter::for('dynamic-api', function (Request $request) use ($limit) {
             return \Illuminate\Cache\RateLimiting\Limit::perMinute($limit)->by($request->user()?->id ?: $request->ip());
         });
+    }
+
+    private function loadHooks(): void
+    {
+        $this->app->singleton(\App\Support\Hooks::class, function ($app) {
+            return new \App\Support\Hooks;
+        });
+
+        if (file_exists(base_path('routes/hooks.php'))) {
+            require base_path('routes/hooks.php');
+        }
     }
 }

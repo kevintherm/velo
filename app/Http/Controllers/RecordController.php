@@ -49,6 +49,18 @@ class RecordController extends Controller
             ->expandFromString($expand ?? '')
             ->simplePaginate($perPage, $page);
 
+        // Hook: record.retrieved
+        $records->getCollection()->transform(function ($record) use ($collection) {
+            $data = $record->data->toArray();
+            $data = \App\Facades\Hooks::apply('record.retrieved', $data, [
+                'collection' => $collection,
+                'record_id' => $record->id,
+            ]);
+            $record->data = new SafeCollection($data);
+
+            return $record;
+        });
+
         return RecordResource::collection($records)->response();
     }
 
@@ -60,6 +72,14 @@ class RecordController extends Controller
             ->filter('id', '=', $recordId)
             ->expandFromString($expand)
             ->firstOrFail();
+
+        // Hook: record.retrieved
+        $data = $record->data->toArray();
+        $data = \App\Facades\Hooks::apply('record.retrieved', $data, [
+            'collection' => $collection,
+            'record_id' => $record->id,
+        ]);
+        $record->data = new SafeCollection($data);
 
         $resource = new RecordResource($record);
 
@@ -106,7 +126,24 @@ class RecordController extends Controller
             $data->put($field->name, $processedFiles);
         }
 
+        // Hook: record.creating
+        $dataArray = $data->toArray();
+        $dataArray = \App\Facades\Hooks::apply('record.creating', $dataArray, [
+            'collection' => $collection,
+        ]);
+        $data = new SafeCollection($dataArray);
+
         $record = $collection->recordRelation()->create(['data' => $data->toArray()]);
+
+        $record = $collection->recordRelation()->create(['data' => $data->toArray()]);
+
+        // Hook: record.created
+        \App\Facades\Hooks::trigger('record.created', [
+            'collection' => $collection,
+            'record' => $record->data->toArray(),
+            'record_id' => $record->id,
+        ]);
+
         $resource = new RecordResource($record);
 
         return $resource->response();
@@ -165,8 +202,24 @@ class RecordController extends Controller
             $data->put($field->name, $processedFiles);
         }
 
+        // Hook: record.updating
+        $dataArray = $data->toArray();
+        $dataArray = \App\Facades\Hooks::apply('record.updating', $dataArray, [
+            'collection' => $collection,
+            'record_id' => $record->id,
+            'original_data' => $record->data->toArray(),
+        ]);
+        $data = new SafeCollection($dataArray);
+
         $record->update([
             'data' => [...$record->data->toArray(), ...$data->toArray()],
+        ]);
+
+        // Hook: record.updated
+        \App\Facades\Hooks::trigger('record.updated', [
+            'collection' => $collection,
+            'record' => $record->data->toArray(),
+            'record_id' => $record->id,
         ]);
 
         $resource = new RecordResource($record);
@@ -177,7 +230,22 @@ class RecordController extends Controller
     public function delete(RecordRequest $request, Collection $collection, string $recordId): JsonResponse
     {
         $record = $collection->records()->filter('id', '=', $recordId)->firstRawOrFail();
+
+        // Hook: record.deleting
+        \App\Facades\Hooks::trigger('record.deleting', [
+            'collection' => $collection,
+            'record' => $record->data->toArray(),
+            'record_id' => $record->id,
+        ]);
+
         $record->delete();
+
+        // Hook: record.deleted
+        \App\Facades\Hooks::trigger('record.deleted', [
+            'collection' => $collection,
+            'record' => $record->data->toArray(),
+            'record_id' => $record->id,
+        ]);
 
         return Response::json([], 204);
     }

@@ -60,9 +60,19 @@ class RealtimeService
                 };
 
                 if ($this->filterMatcher->match($record, $combinedFilter)) {
+                    // Hook: realtime.broadcast
+                    $finalPayload = \App\Facades\Hooks::apply('realtime.broadcast', $payload, [
+                        'connection' => $connection,
+                        'record' => $record,
+                    ]);
+
+                    if ($finalPayload === false) {
+                        continue;
+                    }
+
                     RealtimeMessage::dispatch(
                         $connection->channel_name,
-                        $payload,
+                        $finalPayload,
                         $connection->is_public
                     );
                 }

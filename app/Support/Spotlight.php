@@ -27,27 +27,27 @@ class Spotlight
         $systemCollections = collect([
             [
                 'name' => 'superusers',
-                'description' => 'System Collection',
+                'description' => 'Manage superusers | System Collection',
                 'link' => route('system.superusers'),
                 'icon' => Blade::render("<x-icon name='o-users' />"),
             ],
             [
                 'name' => 'authSessions',
-                'description' => 'System Collection',
+                'description' => 'Manage authenticated users sessions | System Collection',
                 'link' => route('system.sessions'),
                 'icon' => Blade::render("<x-icon name='o-archive-box' />"),
             ],
             [
-                'name' => 'passwordResets',
-                'description' => 'System Collection',
-                'link' => route('system.password.resets'),
+                'name' => 'otps',
+                'description' => 'Manage OTP entries | System Collection',
+                'link' => route('system.otps'),
                 'icon' => Blade::render("<x-icon name='o-archive-box' />"),
             ],
             [
-                'name' => 'otps',
-                'description' => 'System Collection',
-                'link' => route('system.otps'),
-                'icon' => Blade::render("<x-icon name='o-archive-box' />"),
+                'name' => 'realtime',
+                'description' => 'Manage realtime connections | System Collection',
+                'link' => url(route('system.realtime')),
+                'icon' => Blade::render("<x-icon name='lucide.chart-line' />"),
             ],
             [
                 'name' => 'Logs',
@@ -55,6 +55,13 @@ class Spotlight
                 'link' => url(route('system.logs')),
 
                 'icon' => Blade::render("<x-icon name='lucide.chart-line' />"),
+            ],
+            [
+                'name' => 'Settings',
+                'description' => 'Manage system settings | System Collection',
+                'link' => url(route('system.settings')),
+
+                'icon' => Blade::render("<x-icon name='lucide.settings-2' />"),
             ],
         ])->filter(fn ($row) => str_contains(strtolower($row['name']), strtolower($search)))->values();
 

@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('filter')->nullable();
             $table->boolean('is_public')->default(false);
             $table->timestamp('last_seen_at');
-            $table->timestamps();
+            $table->timestamp('created_at')->useCurrent();
 
             $table->index('collection_id');
             $table->index('channel_name');

@@ -1,17 +1,18 @@
 <?php
 
 use App\Models\User;
-use App\Models\AuthSession;
+use Mary\Traits\Toast;
 use App\Models\AuthOtp;
+use Livewire\Component;
+use App\Models\AuthSession;
+use Livewire\Attributes\On;
+use Livewire\WithPagination;
+use Illuminate\Validation\Rule;
+use Livewire\Attributes\Computed;
+use App\Models\RealtimeConnection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
-use Livewire\Attributes\Computed;
-use Livewire\Attributes\On;
-use Livewire\Component;
-use Livewire\WithPagination;
-use Mary\Traits\Toast;
 
 new class extends Component {
     use Toast;
@@ -147,6 +148,31 @@ new class extends Component {
                     'action' => ['label' => 'Action', 'type' => 'select', 'options' => \App\Enums\OtpType::cases(), 'required' => true],
                     'token_hash' => ['label' => 'Token (Hashed)', 'type' => 'text', 'required' => false, 'readonly' => true],
                     'expires_at' => ['label' => 'Expires At', 'type' => 'datetime-local', 'required' => false],
+                ],
+            ],
+            'realtime' => [
+                'model' => RealtimeConnection::class,
+                'name' => 'Realtime Connections',
+                'can_create' => false,
+                'can_edit' => true,
+                'headers' => [
+                    'id' => ['label' => 'ID', 'visible' => true],
+                    'project.name' => ['label' => 'Project', 'visible' => false],
+                    'collection.name' => ['label' => 'Collection', 'visible' => true],
+                    'record_id' => ['label' => 'Record', 'visible' => true],
+                    'socket_id' => ['label' => 'Socket ID', 'visible' => true],
+                    'channel_name' => ['label' => 'Channel Name', 'visible' => true],
+                    'filter' => ['label' => 'Filter', 'visible' => true],
+                    'is_public' => ['label' => 'Public', 'visible' => true],
+                    'last_seen_at' => ['label' => 'Last Seen', 'visible' => true],
+                    'created_at' => ['label' => 'Created', 'visible' => true],
+                ],
+                'form_fields' => [
+                    'socket_id' => ['label' => 'Socket ID', 'type' => 'text', 'required' => false, 'readonly' => true],
+                    'channel_name' => ['label' => 'Channel Name', 'type' => 'text', 'required' => false, 'readonly' => true],
+                    'filter' => ['label' => 'Filter', 'type' => 'text', 'required' => false, 'readonly' => true],
+                    'is_public' => ['label' => 'Public', 'type' => 'checkbox', 'required' => false, 'readonly' => true],
+                    'last_seen_at' => ['label' => 'Last Seen', 'type' => 'datetime-local', 'required' => false, 'readonly' => true],
                 ],
             ],
             default => null,

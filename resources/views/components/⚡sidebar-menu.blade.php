@@ -45,6 +45,7 @@ new class extends Component {
     <x-menu-sub title="System" icon="o-cog-6-tooth" activate-by-route>
         <x-menu-item title="superusers" icon="o-archive-box" link="{{ route('system.superusers') }}" />
         <x-menu-item title="authSessions" icon="o-archive-box" link="{{ route('system.sessions') }}" />
+        <x-menu-item title="realtimeConnections" icon="o-archive-box" link="{{ route('system.realtime') }}" />
         <x-menu-item title="otps" icon="o-archive-box" link="{{ route('system.otps') }}" />
     </x-menu-sub>
 

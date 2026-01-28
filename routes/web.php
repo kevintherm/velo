@@ -22,6 +22,7 @@ Route::prefix('')->group(function () {
         Route::livewire('system/sessions', 'pages::manage-system-collection')->name('system.sessions');
         Route::livewire('system/otps', 'pages::manage-system-collection')->name('system.otps');
         Route::livewire('system/password-resets', 'pages::manage-system-collection')->name('system.password.resets');
+        Route::livewire('system/realtime', 'pages::manage-system-collection')->name('system.realtime');
 
         Route::livewire('system/settings', 'pages::settings')->name('system.settings');
         Route::livewire('system/logs', 'pages::logs')->name('system.logs');
