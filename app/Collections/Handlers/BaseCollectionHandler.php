@@ -2,7 +2,6 @@
 
 namespace App\Collections\Handlers;
 
-use App\Entity\FileObject;
 use App\Enums\FieldType;
 use App\Exceptions\InvalidRecordException;
 use App\Models\CollectionField;
@@ -15,7 +14,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
 {
     public function onRetrieved(Record &$record): void
     {
-        // 
+        //
     }
 
     public function beforeSave(Record &$record): void
@@ -34,7 +33,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
             }
         }
 
-        $textPatternFields = $fields->filter(fn($field) => $field->type === FieldType::Text && ! empty($field->options->autoGeneratePattern ?? null));
+        $textPatternFields = $fields->filter(fn ($field) => $field->type === FieldType::Text && ! empty($field->options->autoGeneratePattern ?? null));
         foreach ($textPatternFields as $field) {
             if (! filled($data->get($field->name))) {
                 $data->put($field->name, fake(config('app.locale'))->regexify($field->options->autoGeneratePattern));
@@ -52,7 +51,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
             }
         }
 
-        $fileFields = $fields->filter(fn($field) => $field->type === FieldType::File);
+        $fileFields = $fields->filter(fn ($field) => $field->type === FieldType::File);
         foreach ($fileFields as $field) {
             $this->deleteRemovedFiles(
                 oldValue: $originalData[$field->name] ?? [],
@@ -169,7 +168,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
             ->get();
 
         // Group by collection_id and field to check cascadeDelete options
-        $groupedByField = $referencingIndexes->groupBy(fn($index) => $index->collection_id . '.' . $index->field);
+        $groupedByField = $referencingIndexes->groupBy(fn ($index) => $index->collection_id.'.'.$index->field);
 
         foreach ($groupedByField as $key => $indexes) {
             $firstIndex = $indexes->first();

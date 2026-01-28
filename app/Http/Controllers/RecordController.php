@@ -116,13 +116,13 @@ class RecordController extends Controller
     {
         if ($collection->type === CollectionType::Auth && array_key_exists('email', $request->validated())) {
             return response()->json([
-                'message' => "Use request update email endpoint for updating email",
+                'message' => 'Use request update email endpoint for updating email',
             ], 400);
         }
 
         if ($collection->type === CollectionType::Auth && array_key_exists('password', $request->validated())) {
             return response()->json([
-                'message' => "Use reset password endpoint for updating password",
+                'message' => 'Use reset password endpoint for updating password',
             ], 400);
         }
 

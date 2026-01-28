@@ -44,14 +44,14 @@ class AuthController extends Controller
         ]);
 
         $validFields = $collection->fields()->pluck('name')->toArray();
-        $identifiers = array_filter($identifiers, fn($field) => in_array($field, $validFields));
+        $identifiers = array_filter($identifiers, fn ($field) => in_array($field, $validFields));
 
         if (empty($identifiers)) {
             return response()->json(['message' => 'Collection is not setup for standard auth method.'], 400);
         }
 
         $identifierValue = $request->input('identifier');
-        $conditions = array_map(fn($field) => ['field' => $field, 'value' => $identifierValue], $identifiers);
+        $conditions = array_map(fn ($field) => ['field' => $field, 'value' => $identifierValue], $identifiers);
         $filterString = RecordQuery::buildFilterString($conditions, 'OR');
         $record = $collection->records()->filterFromString($filterString)->first();
 
@@ -256,7 +256,6 @@ class AuthController extends Controller
             'record_id' => $record->id,
             'token_hash' => $hashed,
             'action' => OtpType::PASSWORD_RESET,
-            'created_at' => now(),
             'expires_at' => now()->addSeconds($expires),
             'ip_address' => $request->ip(),
             'device_name' => $request->input('device_name'),
@@ -295,9 +294,10 @@ class AuthController extends Controller
         $record = $reset->record;
 
         if (! $record) {
-             dump('Reset record_id: ' . $reset->record_id);
-             dump('Reset content:', $reset->toArray());
-             return response()->json(['message' => 'User associated with this request no longer exists.'], 404);
+            dump('Reset record_id: '.$reset->record_id);
+            dump('Reset content:', $reset->toArray());
+
+            return response()->json(['message' => 'User associated with this request no longer exists.'], 404);
         }
 
         $record->data->put('password', Hash::make($request->input('new_password')));
@@ -442,7 +442,7 @@ class AuthController extends Controller
         }
 
         $request->validate([
-            'id'    => 'required_without:email',
+            'id' => 'required_without:email',
             'email' => 'required_without:id|email',
         ]);
 

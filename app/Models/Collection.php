@@ -98,7 +98,7 @@ class Collection extends Model
             'mail_templates' => [
                 'otp_email' => [
                     'subject' => 'Your OTP Code',
-                    'body' => <<<HTML
+                    'body' => <<<'HTML'
 <p>Hello,</p>
 <p>Your OTP code is: <strong>{{otp}}</strong></p>
 <p>This code will expires in {{expires}}.</p>
@@ -108,7 +108,7 @@ HTML,
                 ],
                 'login_alert' => [
                     'subject' => 'Login Alert',
-                    'body' => <<<HTML
+                    'body' => <<<'HTML'
 <p>Hello,</p>
 <p>We noticed a new login to your account.</p>
 <p>

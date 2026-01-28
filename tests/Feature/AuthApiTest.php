@@ -255,6 +255,7 @@ class AuthApiTest extends TestCase
         $otp = null;
         \Mail::assertQueued(\App\Mail\Otp::class, function ($mail) use (&$otp) {
             $otp = $mail->otp;
+
             return $mail->hasTo('test@example.com');
         });
 
@@ -392,6 +393,7 @@ class AuthApiTest extends TestCase
         $otp = '';
         \Mail::assertQueued(\App\Mail\Otp::class, function ($mail) use (&$otp) {
             $otp = $mail->otp;
+
             return $mail->hasTo('otpuser@example.com');
         });
 
@@ -489,6 +491,7 @@ class AuthApiTest extends TestCase
         $otp = '';
         \Mail::assertQueued(\App\Mail\Otp::class, function ($mail) use (&$otp) {
             $otp = $mail->otp;
+
             return true;
         });
 

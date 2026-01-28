@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Casts\AsSafeCollection;
 use App\Collections\Handlers\CollectionTypeHandlerResolver;
 use App\Enums\FieldType;
 use App\Exceptions\InvalidRecordException;
@@ -19,14 +18,14 @@ class Record extends Model
     protected function casts(): array
     {
         return [
-            'data' => AsCollection::class
+            'data' => AsCollection::class,
         ];
     }
 
     protected function documentId(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->data->get('id'),
+            get: fn () => $this->data->get('id'),
             set: function ($value) {
                 $data = $this->data;
                 $data->put('id', $value);
@@ -111,7 +110,7 @@ class Record extends Model
             $missingFields = array_diff($fieldNames, $dataKeys);
 
             if (! empty($missingFields)) {
-                throw new InvalidRecordException('Record structure mismatch. Missing required fields: ' . implode(', ', $missingFields) . '. Expected all fields: ' . implode(', ', $fieldNames));
+                throw new InvalidRecordException('Record structure mismatch. Missing required fields: '.implode(', ', $missingFields).'. Expected all fields: '.implode(', ', $fieldNames));
             }
         });
 

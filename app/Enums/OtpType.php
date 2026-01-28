@@ -8,5 +8,5 @@ enum OtpType: string
     case EMAIL_VERIFICATION = 'email_verification';
     case AUTHENTICATION = 'authentication';
     case EMAIL_CHANGE = 'email_change';
-    
+
 }

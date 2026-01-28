@@ -101,10 +101,10 @@ class RecordRulesCompiler
             if (isset($fieldRules['*'])) {
                 $nestedRules = $fieldRules['*'];
                 unset($fieldRules['*']);
-                $rules[$prefix . $field->name] = $fieldRules;
-                $rules[$prefix . $field->name . '.*'] = $nestedRules;
+                $rules[$prefix.$field->name] = $fieldRules;
+                $rules[$prefix.$field->name.'.*'] = $nestedRules;
             } else {
-                $rules[$prefix . $field->name] = $fieldRules;
+                $rules[$prefix.$field->name] = $fieldRules;
             }
         }
 
@@ -245,10 +245,10 @@ class RecordRulesCompiler
                 break;
 
             case $options instanceof FileFieldOption:
-                $rules[] = "array";
+                $rules[] = 'array';
 
                 if ($field->required) {
-                    $rules[] = "min:1";
+                    $rules[] = 'min:1';
                 }
 
                 if ($options->multiple && $options->maxFiles) {

@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use League\Flysystem\FilesystemException;
-use League\Glide\Filesystem\FileNotFoundException;
 use League\Glide\ServerFactory;
 
 class StorageController extends Controller
@@ -14,7 +12,7 @@ class StorageController extends Controller
     {
         $server = ServerFactory::create([
             'source' => storage_path('app/public'),
-            'cache'  => storage_path('app/glide_cache'),
+            'cache' => storage_path('app/glide_cache'),
         ]);
 
         $publicPath = storage_path("app/public/{$path}");
@@ -24,7 +22,7 @@ class StorageController extends Controller
         }
 
         $mime = Storage::disk('public')->mimeType($path);
-        $ext  = strtolower(pathinfo($publicPath, PATHINFO_EXTENSION));
+        $ext = strtolower(pathinfo($publicPath, PATHINFO_EXTENSION));
 
         if ($mime === 'image/svg+xml' || $ext === 'svg') {
             return response()->file($publicPath);
@@ -42,8 +40,9 @@ class StorageController extends Controller
 
         try {
             $cachePath = $server->makeImage($path, $params);
+
             return response()->file(storage_path("app/glide_cache/$cachePath"), [
-                'Cache-Control' => 'public, max-age=31536000, immutable'
+                'Cache-Control' => 'public, max-age=31536000, immutable',
             ]);
         } catch (\Exception $e) {
             abort(404);
