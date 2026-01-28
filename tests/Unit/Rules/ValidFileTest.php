@@ -16,10 +16,6 @@ class ValidFileTest extends TestCase
         $rule = new ValidFile($options);
         $validator = Validator::make(['file' => $value], ['file' => [$rule]]);
 
-        if ($validator->fails()) {
-            dump($validator->errors()->all());
-        }
-
         return $validator->passes();
     }
 

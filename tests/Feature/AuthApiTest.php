@@ -283,7 +283,7 @@ class AuthApiTest extends TestCase
     {
         $this->collection->update([
             'options' => array_merge($this->collection->options->toArray(), [
-                'mail_templates' => array_merge($this->collection->options['mail_templates'] ?? [], [
+                'mail_templates' => array_merge($this->collection->options['mail_templates']->toArray() ?? [], [
                     'login_alert' => [
                         'subject' => 'Login Alert',
                         'body' => 'Login from {{ip_address}}',

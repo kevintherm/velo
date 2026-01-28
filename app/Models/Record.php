@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\AsSafeCollection;
 use App\Collections\Handlers\CollectionTypeHandlerResolver;
 use App\Enums\FieldType;
 use App\Exceptions\InvalidRecordException;
@@ -18,7 +19,7 @@ class Record extends Model
     protected function casts(): array
     {
         return [
-            'data' => AsCollection::class,
+            'data' => AsSafeCollection::class,
         ];
     }
 

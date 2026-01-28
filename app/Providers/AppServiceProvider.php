@@ -26,10 +26,14 @@ class AppServiceProvider extends ServiceProvider
             return $user !== null;
         });
 
-        Collection::macro('recursive', function () {
-            return $this->map(function ($value) {
+        Collection::macro('recursive', function (int $depth = 2) {
+            if ($depth <= 0) {
+                return $this;
+            }
+
+            return $this->map(function ($value) use ($depth) {
                 if (is_array($value) || $value instanceof SafeCollection) {
-                    return new SafeCollection($value)->recursive();
+                    return (new SafeCollection($value))->recursive($depth - 1);
                 }
 
                 return $value;
