@@ -2,9 +2,8 @@
 
 namespace App\Providers;
 
-use App\Entity\SafeCollection;
 use App\Models\User;
-use Illuminate\Support\Collection;
+use App\Entity\SafeCollection;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
@@ -26,14 +25,10 @@ class AppServiceProvider extends ServiceProvider
             return $user !== null;
         });
 
-        Collection::macro('recursive', function (int $depth = 2) {
-            if ($depth <= 0) {
-                return $this;
-            }
-
-            return $this->map(function ($value) use ($depth) {
-                if (is_array($value) || $value instanceof SafeCollection) {
-                    return (new SafeCollection($value))->recursive($depth - 1);
+        SafeCollection::macro('recursive', function () {
+            return $this->map(function ($value) {
+                if (is_array($value) ) {
+                    return new SafeCollection($value);
                 }
 
                 return $value;

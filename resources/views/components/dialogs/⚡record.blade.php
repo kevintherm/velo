@@ -172,6 +172,7 @@ new class extends Component {
             $attributes[$ruleName] = Str::lower(Str::headline($newName));
         }
 
+        dd($this->form);
         $this->validate($rules, [], $attributes);
     }
 
@@ -369,6 +370,7 @@ new class extends Component {
                                     let initialFiles = [];
                                     if (Array.isArray(this.model)) {
                                         initialFiles = this.model.map(f => {
+                                            if (Array.isArray(f) && f.length > 0) f = f[0];
                                             if (typeof f === 'string') return { source: f, options: { type: 'local' } };
                                             if (f?.uuid) return { source: f.url, options: { type: 'local' } };
                                             return null;
