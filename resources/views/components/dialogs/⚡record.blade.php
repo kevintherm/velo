@@ -374,10 +374,10 @@ new class extends Component {
                                             return null;
                                         }).filter(f => f);
                                     }
-                            
+
                                     const extraOpts = {};
-                                    extraOpts.allowMultiple = this.fieldOptions.multiple;
-                                    extraOpts.maxFiles = this.fieldOptions.maxFiles || 1;
+                                    extraOpts.allowMultiple = true;
+                                    extraOpts.maxFiles = this.fieldOptions.multiple ? (this.fieldOptions.maxFiles || 999) : 1;
                                     extraOpts.acceptedFileTypes = this.fieldOptions.allowedMimeTypes;
                                     if (this.fieldOptions.minSize) {
                                         extraOpts.minFileSize = this.fieldOptions.minSize;
@@ -385,7 +385,7 @@ new class extends Component {
                                     if (this.fieldOptions.maxSize) {
                                         extraOpts.maxFileSize = this.fieldOptions.maxSize;
                                     }
-                            
+
                                     FilePond.create($refs.input, {
                                         files: initialFiles,
                                         credits: false,
@@ -395,7 +395,7 @@ new class extends Component {
                                                 return {
                                                     abort: () => {
                                                         $wire.cancelUpload('form.{{ $field->name }}');
-                            
+
                                                         abort();
                                                     }
                                                 };
@@ -411,7 +411,7 @@ new class extends Component {
                                                         load(new File([blob], name, { type: blob.type }));
                                                     })
                                                     .catch(err => error(err.message));
-                            
+
                                                 return {
                                                     abort: () => abort(),
                                                 };
@@ -422,16 +422,16 @@ new class extends Component {
                                         },
                                         onremovefile: (err, file) => {
                                             if (err) return;
-                            
+
                                             const source = file?.source;
                                             if (!source) return;
-                            
+
                                             const normalize = (item) => {
                                                 if (typeof item === 'string') return item;
                                                 if (item && typeof item === 'object' && item.url) return item.url;
                                                 return null;
                                             };
-                            
+
                                             this.model = (this.model || []).filter((item) => normalize(item) !== source);
                                             $wire.set('form.{{ $field->name }}', this.model);
                                         },

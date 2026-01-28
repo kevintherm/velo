@@ -3,8 +3,9 @@
 namespace App\Entity;
 
 use Illuminate\Support\Collection;
+use Livewire\Wireable;
 
-class SafeCollection extends Collection
+class SafeCollection extends Collection implements Wireable
 {
     public function __get($key)
     {
@@ -19,8 +20,13 @@ class SafeCollection extends Collection
         return $value;
     }
 
-    public function toArray()
+    public function toLivewire(): array
     {
-        return parent::toArray();
+        return $this->toArray();
+    }
+
+    public static function fromLivewire($value): static
+    {
+        return new static($value);
     }
 }

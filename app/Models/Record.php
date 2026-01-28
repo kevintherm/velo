@@ -19,7 +19,7 @@ class Record extends Model
     protected function casts(): array
     {
         return [
-            'data' => AsSafeCollection::class
+            'data' => AsCollection::class
         ];
     }
 

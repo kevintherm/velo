@@ -1,11 +1,11 @@
 <?php
 
-use App\Http\Controllers\FileUploadController;
+use App\Http\Controllers\StorageController;
 use App\Models\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('_')->group(function () {
+Route::prefix('')->group(function () {
     Route::livewire('login', 'pages::login')->name('login');
     Route::livewire('register', 'pages::register')->name('register');
     Route::livewire('forgot-password', 'pages::forgot-password')->name('password.request');
@@ -28,10 +28,6 @@ Route::prefix('_')->group(function () {
 
         Route::livewire('collections/{collection:name}', 'pages::collection')->name('collections');
 
-        Route::post('uploads/process', [FileUploadController::class, 'process'])->name('uploads.process');
-        Route::delete('uploads/revert', [FileUploadController::class, 'revert'])->name('uploads.revert');
-        Route::get('uploads/load', [FileUploadController::class, 'load'])->name('uploads.load');
-
         Route::get('logout', function () {
             Auth::logout();
             session()->regenerate(destroy: true);
@@ -40,3 +36,6 @@ Route::prefix('_')->group(function () {
         })->name('logout');
     });
 });
+
+Route::get('/files/{path}', [StorageController::class, 'intercept'])
+    ->where('path', '.*');

@@ -253,12 +253,10 @@ class RecordRulesCompiler
 
                 if ($options->multiple && $options->maxFiles) {
                     $rules[] = "max:{$options->maxFiles}";
-                } else {
-                    $rules[] = "max:1";
                 }
 
                 $rules['*'] = ['nullable', new ValidFile($options)];
-                
+
                 break;
 
             case $options instanceof RelationFieldOption:

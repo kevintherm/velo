@@ -1,7 +1,6 @@
 BUG:
 
 TODO:
-- add auto generate thumbnail feature for created lifecycle
 - add extension bus to extend app hooks
 - create documentations
 - deploy
