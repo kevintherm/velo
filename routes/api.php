@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Route;
  */
 Route::prefix('collections/{collection:name}')->group(function () {
     Route::prefix('/auth')->middleware(['throttle:dynamic-api'])->name('auth.')->group(function () {
-        Route::post('/authenticate-with-password', [AuthController::class, 'authenticateWithPassword'])->name('authenticate-with-password');
         Route::get('/me', [AuthController::class, 'me'])->name('me');
+        Route::post('/authenticate-with-password', [AuthController::class, 'authenticateWithPassword'])->name('authenticate-with-password');
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::post('/logout-all', [AuthController::class, 'logoutAll'])->name('logout-all');
         Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('reset-password');
@@ -20,6 +20,8 @@ Route::prefix('collections/{collection:name}')->group(function () {
         Route::post('/confirm-forgot-password', [AuthController::class, 'confirmForgotPassword'])->name('confirm-forgot-password');
         Route::post('/request-auth-otp', [AuthController::class, 'requestAuthOtp'])->name('request-otp');
         Route::post('/authenticate-with-otp', [AuthController::class, 'authenticateWithOtp'])->name('authenticate-with-otp');
+        Route::post('/request-update-email', [AuthController::class, 'requestUpdateEmail'])->name('request-update-email');
+        Route::post('/confirm-update-email', [AuthController::class, 'confirmUpdateEmail'])->name('confirm-update-email');
     });
 
     Route::prefix('/records')->name('records.')->group(function () {

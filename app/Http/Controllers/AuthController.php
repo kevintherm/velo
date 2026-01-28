@@ -44,14 +44,14 @@ class AuthController extends Controller
         ]);
 
         $validFields = $collection->fields()->pluck('name')->toArray();
-        $identifiers = array_filter($identifiers, fn ($field) => in_array($field, $validFields));
+        $identifiers = array_filter($identifiers, fn($field) => in_array($field, $validFields));
 
         if (empty($identifiers)) {
             return response()->json(['message' => 'Collection is not setup for standard auth method.'], 400);
         }
 
         $identifierValue = $request->input('identifier');
-        $conditions = array_map(fn ($field) => ['field' => $field, 'value' => $identifierValue], $identifiers);
+        $conditions = array_map(fn($field) => ['field' => $field, 'value' => $identifierValue], $identifiers);
         $filterString = RecordQuery::buildFilterString($conditions, 'OR');
         $record = $collection->records()->filterFromString($filterString)->first();
 
@@ -295,7 +295,9 @@ class AuthController extends Controller
         $record = $reset->record;
 
         if (! $record) {
-            return response()->json(['message' => 'User associated with this request no longer exists.'], 404);
+             dump('Reset record_id: ' . $reset->record_id);
+             dump('Reset content:', $reset->toArray());
+             return response()->json(['message' => 'User associated with this request no longer exists.'], 404);
         }
 
         $record->data->put('password', Hash::make($request->input('new_password')));
@@ -343,8 +345,7 @@ class AuthController extends Controller
         AuthOtp::create([
             'project_id' => $collection->project_id,
             'collection_id' => $collection->id,
-            'otpable_type' => Record::class,
-            'otpable_id' => $record->id,
+            'record_id' => $record->id,
             'token_hash' => $hashed,
             'action' => OtpType::AUTHENTICATION,
             'expires_at' => $expiresAt,
@@ -428,5 +429,87 @@ class AuthController extends Controller
             'message' => 'Authenticated.',
             'data' => $token,
         ]);
+    }
+
+    public function requestUpdateEmail(Request $request, Collection $collection)
+    {
+        if ($collection->type !== CollectionType::Auth) {
+            return response()->json(['message' => 'Collection is not auth enabled.'], 400);
+        }
+
+        if (! isset($collection->options['auth_methods']['otp']) || ! $collection->options['auth_methods']['otp']['enabled']) {
+            return response()->json(['message' => 'OTP authentication is not enabled.'], 400);
+        }
+
+        $request->validate([
+            'id'    => 'required_without:email',
+            'email' => 'required_without:id|email',
+        ]);
+
+        $id = $request->input('id');
+        $email = $request->input('email');
+        $record = $collection->records()->filter('email', '=', $email)->orFilter('id', '=', $id)->first();
+
+        if (! $record) {
+            return response()->json(['message' => 'If an account exists with associated details, you will receive a authorization code.']);
+        }
+
+        $otpLength = (int) ($collection->options['auth_methods']['otp']['config']['generate_password_length'] ?? 6);
+        [$otp, $hashed] = app(OtpService::class)->generate($otpLength);
+
+        $duration = (int) $collection->options['other']['tokens_options']['email_change_duration']['value'] ?? 1800;
+        $expiresAt = now()->addSeconds($duration);
+
+        AuthOtp::create([
+            'project_id' => $collection->project_id,
+            'collection_id' => $collection->id,
+            'record_id' => $record->id,
+            'token_hash' => $hashed,
+            'action' => OtpType::EMAIL_CHANGE,
+            'expires_at' => $expiresAt,
+            'ip_address' => $request->ip(),
+            'device_name' => $request->input('device_name'),
+        ]);
+
+        Mail::to($email)->queue(new Otp($otp, $duration, $collection, $collection->project->name));
+
+        return response()->json(['message' => 'If an account exists with this email, you will receive a authorization code.']);
+    }
+
+    public function confirmUpdateEmail(Request $request, Collection $collection)
+    {
+        if ($collection->type !== CollectionType::Auth) {
+            return response()->json(['message' => 'Collection is not auth enabled.'], 400);
+        }
+
+        $request->validate([
+            'otp' => 'required|string',
+            'new_email' => ['required', 'email', 'confirmed'],
+        ]);
+
+        $reset = AuthOtp::where('collection_id', $collection->id)
+            ->where('action', OtpType::EMAIL_CHANGE)
+            ->whereNull('used_at')
+            ->where('expires_at', '>', now())
+            ->where('token_hash', hash('sha256', $request->input('otp')))
+            ->first();
+
+        if (! $reset) {
+            return response()->json(['message' => 'Invalid code.'], 400);
+        }
+
+        $record = $reset->record;
+
+        if (! $record) {
+            return response()->json(['message' => 'User associated with this request no longer exists.'], 404);
+        }
+
+        $record->data->put('email', $request->input('new_email'));
+        $record->save();
+
+        $reset->used_at = now();
+        $reset->save();
+
+        return response()->json(['message' => 'Email updated successfully.']);
     }
 }

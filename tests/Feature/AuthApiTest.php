@@ -253,14 +253,14 @@ class AuthApiTest extends TestCase
         ]);
 
         $otp = null;
-        \Mail::assertSent(\App\Mail\Otp::class, function ($mail) use (&$otp) {
+        \Mail::assertQueued(\App\Mail\Otp::class, function ($mail) use (&$otp) {
             $otp = $mail->otp;
             return $mail->hasTo('test@example.com');
         });
 
         $this->assertNotNull($otp);
 
-        $response = $this->postJson('/api/collections/users/auth/confirm-password-reset', [
+        $response = $this->postJson('/api/collections/users/auth/confirm-forgot-password', [
             'otp' => $otp,
             'new_password' => 'newpassword123',
             'new_password_confirmation' => 'newpassword123',
@@ -406,5 +406,101 @@ class AuthApiTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonStructure(['message', 'data']);
+    }
+
+    public function test_can_request_email_update()
+    {
+        // Enable OTP
+        $this->collection->update([
+            'options' => array_merge($this->collection->options->toArray(), [
+                'auth_methods' => array_merge($this->collection->options->toArray()['auth_methods'], [
+                    'otp' => [
+                        'enabled' => true,
+                        'config' => [
+                            'duration_s' => 180,
+                            'generate_password_length' => 6,
+                        ],
+                    ],
+                ]),
+            ]),
+        ]);
+
+        $record = Record::create([
+            'collection_id' => $this->collection->id,
+            'data' => [
+                'email' => 'old@example.com',
+                'password' => 'password123',
+                'verified' => true,
+            ],
+        ]);
+
+        \Mail::fake();
+
+        $response = $this->postJson('/api/collections/users/auth/request-update-email', [
+            'email' => 'old@example.com',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonStructure(['message']);
+
+        $this->assertDatabaseHas('auth_otps', [
+            'record_id' => $record->id,
+            'action' => OtpType::EMAIL_CHANGE,
+        ]);
+
+        \Mail::assertQueued(\App\Mail\Otp::class, function ($mail) {
+            return $mail->hasTo('old@example.com');
+        });
+    }
+
+    public function test_can_confirm_email_update()
+    {
+        // Enable OTP
+        $this->collection->update([
+            'options' => array_merge($this->collection->options->toArray(), [
+                'auth_methods' => array_merge($this->collection->options->toArray()['auth_methods'], [
+                    'otp' => [
+                        'enabled' => true,
+                        'config' => [
+                            'duration_s' => 180,
+                            'generate_password_length' => 6,
+                        ],
+                    ],
+                ]),
+            ]),
+        ]);
+
+        $record = Record::create([
+            'collection_id' => $this->collection->id,
+            'data' => [
+                'email' => 'old@example.com',
+                'password' => 'password123',
+                'verified' => true,
+            ],
+        ]);
+
+        \Mail::fake();
+
+        // Generate OTP
+        $this->postJson('/api/collections/users/auth/request-update-email', [
+            'email' => 'old@example.com',
+        ]);
+
+        $otp = '';
+        \Mail::assertQueued(\App\Mail\Otp::class, function ($mail) use (&$otp) {
+            $otp = $mail->otp;
+            return true;
+        });
+
+        $response = $this->postJson('/api/collections/users/auth/confirm-update-email', [
+            'otp' => $otp,
+            'new_email' => 'new@example.com',
+            'new_email_confirmation' => 'new@example.com',
+        ]);
+
+        $response->assertStatus(200);
+
+        $record->refresh();
+        $this->assertEquals('new@example.com', $record->data->get('email'));
     }
 }

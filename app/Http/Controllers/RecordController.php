@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CollectionType;
 use App\Http\Requests\RecordRequest;
 use App\Http\Resources\RecordResource;
 use App\Models\Collection;
@@ -71,6 +72,18 @@ class RecordController extends Controller
 
     public function update(RecordRequest $request, Collection $collection, string $recordId): JsonResponse
     {
+        if ($collection->type === CollectionType::Auth && array_key_exists('email', $request->validated())) {
+            return response()->json([
+                'message' => "Use request update email endpoint for updating email",
+            ], 400);
+        }
+
+        if ($collection->type === CollectionType::Auth && array_key_exists('password', $request->validated())) {
+            return response()->json([
+                'message' => "Use reset password endpoint for updating password",
+            ], 400);
+        }
+
         $record = $collection->records()->filter('id', '=', $recordId)->firstRawOrFail();
 
         $record->update([

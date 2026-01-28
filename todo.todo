@@ -1,9 +1,8 @@
 BUG:
 
 TODO:
-- add request change email verification
 - add auto generate thumbnail feature for created lifecycle
-- unify system migration files into a single reusable component
+- unify system migration files into a single reusable livewire component
 - add extension bus to extend app hooks
 - create documentations
 - deploy
