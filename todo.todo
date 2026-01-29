@@ -1,9 +1,11 @@
 BUG:
 
 TODO:
+- relation and field that are single should not receive array
+- fix bug admin panel relation file still sends array
 
 IMPROVEMENT:
-- relation and field that are single should not receive array
+- normalize records on collection fields update (queue?)
 - add a way to validate array e.g (needle in haystack)
 - add verify email endpoint
 - validate apply hooks returned data.

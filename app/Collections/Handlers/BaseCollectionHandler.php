@@ -51,17 +51,18 @@ class BaseCollectionHandler implements CollectionTypeHandler
             }
         }
 
-        $normalizeFields = [FieldType::Relation, FieldType::File];
+        // @TODO normalize on collection fields update
+        // $normalizeFields = [FieldType::Relation, FieldType::File];
 
-        $fieldsToNormalize = $fields->filter(fn ($field) => in_array($field->type, $normalizeFields));
-        foreach ($fieldsToNormalize as $field) {
-            if ($data->has($field->name)) {
-                $val = $data->get($field->name);
-                if ($val !== null && ! is_array($val)) {
-                    $data->put($field->name, [$val]);
-                }
-            }
-        }
+        // $fieldsToNormalize = $fields->filter(fn ($field) => in_array($field->type, $normalizeFields));
+        // foreach ($fieldsToNormalize as $field) {
+        //     if ($data->has($field->name)) {
+        //         $val = $data->get($field->name);
+        //         if ($val !== null && ! is_array($val)) {
+        //             $data->put($field->name, [$val]);
+        //         }
+        //     }
+        // }
 
         $fileFields = $fields->filter(fn ($field) => $field->type === FieldType::File);
         foreach ($fileFields as $field) {
