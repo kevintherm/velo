@@ -4,7 +4,7 @@ remote_theme: just-the-docs/just-the-docs
 
 color_scheme: dark
 
-logo: "../public/assets/velo.svg"
+logo: "assets/velo.svg"
 logo_alt: "Velo"
 
 search_enabled: true
