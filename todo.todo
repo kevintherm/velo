@@ -1,10 +1,10 @@
 BUG:
 
 TODO:
-- create documentations
-- deploy
 
 IMPROVEMENT:
+- relation and field that are single should not receive array
+- add a way to validate array e.g (needle in haystack)
 - add verify email endpoint
 - validate apply hooks returned data.
 - add 2fa, mfa, oauth

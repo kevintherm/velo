@@ -14,9 +14,7 @@ return new class extends Migration
         Schema::create('auth_password_resets', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('project_id');
-            $table->foreignId('collection_id');
-            $table->foreignId('record_id');
+            $table->foreignId('project_id')->default(1);
 
             $table->string('email')->index();
             $table->string('token', 64)->unique();

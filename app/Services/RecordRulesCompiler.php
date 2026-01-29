@@ -245,37 +245,48 @@ class RecordRulesCompiler
                 break;
 
             case $options instanceof FileFieldOption:
-                $rules[] = 'array';
+                $isMultiple = $options->multiple || ($options->maxFiles && $options->maxFiles > 1);
 
-                if ($field->required) {
-                    $rules[] = 'min:1';
+                if ($isMultiple) {
+                    $rules[] = 'array';
+
+                    if ($field->required) {
+                        $rules[] = 'min:1';
+                    }
+
+                    if ($options->maxFiles) {
+                        $rules[] = "max:{$options->maxFiles}";
+                    }
+
+                    $rules['*'] = ['nullable', new ValidFile($options)];
+                } else {
+                    $rules[] = new ValidFile($options);
                 }
-
-                if ($options->multiple && $options->maxFiles) {
-                    $rules[] = "max:{$options->maxFiles}";
-                }
-
-                $rules['*'] = ['nullable', new ValidFile($options)];
-
                 break;
 
             case $options instanceof RelationFieldOption:
-                $rules[] = 'array';
+                $isMultiple = $options->multiple || ($options->maxSelect && $options->maxSelect > 1);
 
-                if ($options->minSelect !== null) {
-                    $rules[] = "min:{$options->minSelect}";
-                }
+                if ($isMultiple) {
+                    $rules[] = 'array';
 
-                if ($options->maxSelect !== null) {
-                    $rules[] = "max:{$options->maxSelect}";
-                } elseif (! $options->multiple) {
-                    $rules[] = 'max:1';
-                }
+                    if ($options->minSelect !== null) {
+                        $rules[] = "min:{$options->minSelect}";
+                    }
 
-                if ($options->collection !== null) {
-                    $rules['*'] = [
-                        new RecordExists($options->collection),
-                    ];
+                    if ($options->maxSelect !== null) {
+                        $rules[] = "max:{$options->maxSelect}";
+                    }
+
+                    if ($options->collection !== null) {
+                        $rules['*'] = [
+                            new RecordExists($options->collection),
+                        ];
+                    }
+                } else {
+                    if ($options->collection !== null) {
+                        $rules[] = new RecordExists($options->collection);
+                    }
                 }
                 break;
         }
