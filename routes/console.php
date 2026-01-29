@@ -8,6 +8,14 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+Schedule::command('queue:work --stop-when-empty --timeout=120 --memory=128')
+   ->everyMinute()
+   ->withoutOverlapping();
+
+Schedule::call(function () {
+    Artisan::call('migrate:fresh --seed');
+})->hourly();
+
 Schedule::call(function () {
     \App\Models\RealtimeConnection::pruneStale();
 })->everyMinute();

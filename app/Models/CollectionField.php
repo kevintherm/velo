@@ -124,6 +124,10 @@ class CollectionField extends Model
             ],
         ];
 
+        foreach($fields as $i => &$field) {
+            $field['order'] = $i;
+        }
+
         return $fields;
     }
 

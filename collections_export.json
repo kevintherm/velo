@@ -1,0 +1,144 @@
+[
+    {
+        "id": 2,
+        "project_id": 1,
+        "name": "flashcards",
+        "type": "Base",
+        "api_rules": {
+            "list": "@request.auth.id = user",
+            "view": "@request.auth.id = user",
+            "create": "@request.auth.id != null && @request.auth.id = @request.body.user",
+            "delete": "@request.auth.id = user",
+            "update": "@request.auth.id = user"
+        },
+        "options": {
+            "other": {
+                "tokens_options": {
+                    "auth_duration": {
+                        "value": "1209600",
+                        "invalidate_previous_tokens": false
+                    },
+                    "email_verification": {
+                        "value": "604800",
+                        "invalidate_previous_tokens": false
+                    },
+                    "email_change_duration": {
+                        "value": "1800",
+                        "invalidate_previous_tokens": false
+                    },
+                    "password_reset_duration": {
+                        "value": "1800",
+                        "invalidate_previous_tokens": false
+                    },
+                    "protected_file_access_duration": {
+                        "value": "120",
+                        "invalidate_previous_tokens": false
+                    }
+                }
+            },
+            "auth_methods": {
+                "otp": {
+                    "config": {
+                        "duration_s": 180,
+                        "generate_password_length": 8
+                    },
+                    "enabled": false
+                },
+                "oauth2": {
+                    "config": [],
+                    "enabled": false,
+                    "providers": []
+                },
+                "standard": {
+                    "fields": [
+                        "email"
+                    ],
+                    "enabled": true
+                }
+            },
+            "mail_templates": {
+                "otp_email": {
+                    "body": "<p>Hello,<\/p>\n<p>Your OTP code is: <strong>{{otp}}<\/strong><\/p>\n<p>This code will expires in {{expires}}.<\/p>\n<p>If you did not perform an action that requires an OTP code, no further action is required.<\/p>\n<p>Regards,<br><strong>{{app_name}}<\/strong><\/p>",
+                    "subject": "Your OTP Code"
+                },
+                "login_alert": {
+                    "body": "<p>Hello,<\/p>\n<p>We noticed a new login to your account.<\/p>\n<p>\n    <b>Device:<\/b> {{device_name}}<br>\n    <b>IP Address:<\/b> {{ip_address}}<br>\n    <b>Time:<\/b> {{date}}\n<\/p>\n<p>If this was you, you can ignore this email.<\/p>\n<p>If you do not recognize this activity, please change your password immediately.<\/p>\n<p>Regards,<br><strong>{{app_name}}<\/strong><\/p>",
+                    "subject": "Login Alert"
+                }
+            }
+        },
+        "created_at": "2026-01-29T10:44:10.000000Z",
+        "updated_at": "2026-01-29T15:46:28.000000Z"
+    },
+    {
+        "id": 3,
+        "project_id": 1,
+        "name": "sessions",
+        "type": "Base",
+        "api_rules": {
+            "list": "@request.auth.id = user",
+            "view": "@request.auth.id = user",
+            "create": "@request.auth.id != null && @request.body.user = @request.auth.id",
+            "delete": "SUPERUSER_ONLY",
+            "update": "SUPERUSER_ONLY"
+        },
+        "options": {
+            "other": {
+                "tokens_options": {
+                    "auth_duration": {
+                        "value": "1209600",
+                        "invalidate_previous_tokens": false
+                    },
+                    "email_verification": {
+                        "value": "604800",
+                        "invalidate_previous_tokens": false
+                    },
+                    "email_change_duration": {
+                        "value": "1800",
+                        "invalidate_previous_tokens": false
+                    },
+                    "password_reset_duration": {
+                        "value": "1800",
+                        "invalidate_previous_tokens": false
+                    },
+                    "protected_file_access_duration": {
+                        "value": "120",
+                        "invalidate_previous_tokens": false
+                    }
+                }
+            },
+            "auth_methods": {
+                "otp": {
+                    "config": {
+                        "duration_s": 180,
+                        "generate_password_length": 8
+                    },
+                    "enabled": false
+                },
+                "oauth2": {
+                    "config": [],
+                    "enabled": false,
+                    "providers": []
+                },
+                "standard": {
+                    "fields": [
+                        "email"
+                    ],
+                    "enabled": true
+                }
+            },
+            "mail_templates": {
+                "otp_email": {
+                    "body": "<p>Hello,<\/p>\n<p>Your OTP code is: <strong>{{otp}}<\/strong><\/p>\n<p>This code will expires in {{expires}}.<\/p>\n<p>If you did not perform an action that requires an OTP code, no further action is required.<\/p>\n<p>Regards,<br><strong>{{app_name}}<\/strong><\/p>",
+                    "subject": "Your OTP Code"
+                },
+                "login_alert": {
+                    "body": "<p>Hello,<\/p>\n<p>We noticed a new login to your account.<\/p>\n<p>\n    <b>Device:<\/b> {{device_name}}<br>\n    <b>IP Address:<\/b> {{ip_address}}<br>\n    <b>Time:<\/b> {{date}}\n<\/p>\n<p>If this was you, you can ignore this email.<\/p>\n<p>If you do not recognize this activity, please change your password immediately.<\/p>\n<p>Regards,<br><strong>{{app_name}}<\/strong><\/p>",
+                    "subject": "Login Alert"
+                }
+            }
+        },
+        "created_at": "2026-01-29T10:45:09.000000Z",
+        "updated_at": "2026-01-29T14:55:51.000000Z"
+    }
+]

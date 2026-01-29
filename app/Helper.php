@@ -35,6 +35,8 @@ class Helper
             'name' => 'users',
             'project_id' => $project->id,
             'type' => CollectionType::Auth,
+            'options' => [],
+            'api_rules' => [],
         ]);
 
         $collectionFields = CollectionField::createAuthFrom([
@@ -72,17 +74,6 @@ class Helper
             'email' => $superuserEmail,
             'password' => $superuserPassword,
         ]);
-
-        foreach (range(1, 10) as $i) {
-            Record::create([
-                'collection_id' => $userCollection->id,
-                'data' => [
-                    'name' => fake()->name(),
-                    'email' => fake()->email(),
-                    'password' => 'password',
-                ],
-            ]);
-        }
 
         \DB::commit();
 
