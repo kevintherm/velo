@@ -74,6 +74,7 @@ class RecordRequest extends FormRequest
             ->using(new MysqlIndexStrategy)
             ->withForm($this->all())
             ->ignoreId($this->route()->parameter('recordId'))
+            ->nullableWhen(fn() => $this->route()->getActionMethod() == 'update')
             ->compile();
 
         return $rules;

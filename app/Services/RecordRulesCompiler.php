@@ -2,22 +2,23 @@
 
 namespace App\Services;
 
-use App\Contracts\IndexStrategy;
-use App\Enums\FieldType;
-use App\FieldOptions\DatetimeFieldOption;
-use App\FieldOptions\EmailFieldOption;
-use App\FieldOptions\FileFieldOption;
-use App\FieldOptions\NumberFieldOption;
-use App\FieldOptions\RelationFieldOption;
-use App\FieldOptions\TextFieldOption;
+use Closure;
 use App\Helper;
+use App\Enums\FieldType;
+use App\Rules\ValidFile;
 use App\Models\Collection;
+use App\Rules\RecordExists;
 use App\Models\CollectionField;
+use Illuminate\Validation\Rule;
+use App\Contracts\IndexStrategy;
 use App\Rules\AllowedEmailDomains;
 use App\Rules\BlockedEmailDomains;
-use App\Rules\RecordExists;
-use App\Rules\ValidFile;
-use Illuminate\Validation\Rule;
+use App\FieldOptions\FileFieldOption;
+use App\FieldOptions\TextFieldOption;
+use App\FieldOptions\EmailFieldOption;
+use App\FieldOptions\NumberFieldOption;
+use App\FieldOptions\DatetimeFieldOption;
+use App\FieldOptions\RelationFieldOption;
 
 class RecordRulesCompiler
 {
@@ -26,6 +27,7 @@ class RecordRulesCompiler
     public function __construct(
         protected Collection $collection,
         private ?string $ignoreId = null,
+        private ?Closure $nullableWhenFn = null,
         private ?array $formObject = null,
     ) {}
 
@@ -46,6 +48,13 @@ class RecordRulesCompiler
     public function ignoreId(?string $id): self
     {
         $this->ignoreId = $id;
+
+        return $this;
+    }
+
+    public function nullableWhen(Closure $when): self
+    {
+        $this->nullableWhenFn = $when;
 
         return $this;
     }
@@ -122,7 +131,7 @@ class RecordRulesCompiler
         $fieldRules = [];
 
         // Basic required/nullable rules
-        if ($field->name === 'id') {
+        if ($field->name === 'id' || ($this->nullableWhenFn && ($this->nullableWhenFn)())) {
             $fieldRules[] = 'nullable';
         } elseif ($field->required) {
             $fieldRules[] = 'required';
