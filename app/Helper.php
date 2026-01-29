@@ -50,7 +50,15 @@ class Helper
                 'type' => FieldType::File,
                 'unique' => false,
                 'required' => false,
-                'options' => [],
+                'options' => [
+                    'allowedMimeTypes' => [
+                        'image/gif',
+                        'image/jpeg',
+                        'image/png',
+                        'image/svg+xml',
+                        'image/webp',
+                    ]
+                ],
             ],
         ]);
 
@@ -60,7 +68,7 @@ class Helper
 
         $user = User::create([
             'project_id' => $project->id,
-            'name' => 'superuser_'.Str::random(8),
+            'name' => 'superuser_' . Str::random(8),
             'email' => $superuserEmail,
             'password' => $superuserPassword,
         ]);

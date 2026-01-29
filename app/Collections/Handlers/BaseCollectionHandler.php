@@ -14,7 +14,23 @@ class BaseCollectionHandler implements CollectionTypeHandler
 {
     public function onRetrieved(Record &$record): void
     {
-        //
+        $fields = $record->collection->fields->keyBy('name');
+        $data = $record->data;
+
+        // Normalize fields based on multiple-able
+        $normalizeFields = [FieldType::Relation, FieldType::File];
+        $fieldsToNormalize = $fields->filter(fn($field) => in_array($field->type, $normalizeFields));
+        foreach ($fieldsToNormalize as $field) {
+            if ($data->has($field->name)) {
+                $value = $data->get($field->name);
+                $data->put(
+                    $field->name,
+                    $this->normalizeValue($value, $field->options->multiple)
+                );
+            }
+        }
+
+        $record->data = $data;
     }
 
     public function beforeSave(Record &$record): void
@@ -27,15 +43,15 @@ class BaseCollectionHandler implements CollectionTypeHandler
             ? $originalData->toArray()
             : ($originalData ?? []);
 
-        if (! $record->exists && $fields->has('created')) {
-            if (! $data->has('created') || ! filled($data->get('created'))) {
+        if (!$record->exists && $fields->has('created')) {
+            if (!$data->has('created') || !filled($data->get('created'))) {
                 $data->put('created', now()->toIso8601String());
             }
         }
 
-        $textPatternFields = $fields->filter(fn ($field) => $field->type === FieldType::Text && ! empty($field->options->autoGeneratePattern ?? null));
+        $textPatternFields = $fields->filter(fn($field) => $field->type === FieldType::Text && !empty($field->options->autoGeneratePattern ?? null));
         foreach ($textPatternFields as $field) {
-            if (! filled($data->get($field->name))) {
+            if (!filled($data->get($field->name))) {
                 $data->put($field->name, fake(config('app.locale'))->regexify($field->options->autoGeneratePattern));
             }
         }
@@ -64,7 +80,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
         //     }
         // }
 
-        $fileFields = $fields->filter(fn ($field) => $field->type === FieldType::File);
+        $fileFields = $fields->filter(fn($field) => $field->type === FieldType::File);
         foreach ($fileFields as $field) {
             $this->deleteRemovedFiles(
                 oldValue: $originalData[$field->name] ?? [],
@@ -181,7 +197,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
             ->get();
 
         // Group by collection_id and field to check cascadeDelete options
-        $groupedByField = $referencingIndexes->groupBy(fn ($index) => $index->collection_id.'.'.$index->field);
+        $groupedByField = $referencingIndexes->groupBy(fn($index) => $index->collection_id . '.' . $index->field);
 
         foreach ($groupedByField as $key => $indexes) {
             $firstIndex = $indexes->first();
@@ -191,12 +207,12 @@ class BaseCollectionHandler implements CollectionTypeHandler
                 ->where('name', $firstIndex->field)
                 ->first();
 
-            if (! $field) {
+            if (!$field) {
                 continue;
             }
 
             // If cascadeDelete is false, throw an exception
-            if (! $field->options?->cascadeDelete) {
+            if (!$field->options?->cascadeDelete) {
                 throw new InvalidRecordException("Cannot delete record: it is referenced by {$indexes->count()} record(s) in field '{$field->name}' of collection '{$field->collection->name}'.");
             }
 
@@ -218,4 +234,28 @@ class BaseCollectionHandler implements CollectionTypeHandler
         // Clean up all indexes owned by this record
         $collection->recordIndexes()->where('record_id', $recordId)->delete();
     }
+
+    private function normalizeValue(mixed $value, bool $multiple): mixed
+    {
+        if ($multiple) {
+            if ($value === null) {
+                return [];
+            }
+
+            if (is_array($value)) {
+                return array_is_list($value) ? $value : [$value];
+            }
+
+            return [$value];
+        }
+
+        if (is_array($value)) {
+            return array_is_list($value)
+                ? ($value[0] ?? null)
+                : $value;
+        }
+
+        return $value;
+    }
+
 }

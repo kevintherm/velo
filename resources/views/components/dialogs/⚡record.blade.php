@@ -86,7 +86,7 @@ new class extends Component {
                 }
 
                 if ($field->type === FieldType::File) {
-                    $this->form[$field->name] = [];
+                    $this->form[$field->name] = $field->options->multiple ? [] : null;
 
                     continue;
                 }
@@ -102,7 +102,7 @@ new class extends Component {
 
         foreach ($this->fields as $field) {
             if ($field->type === FieldType::File) {
-                $this->form[$field->name] = is_array($data[$field->name]) ? $data[$field->name] : [$data[$field->name]];
+                $this->form[$field->name] = $field->options->multiple ? (is_array($data[$field->name]) ? $data[$field->name] : [$data[$field->name]]) : $data[$field->name];
             }
         }
     }
@@ -195,6 +195,21 @@ new class extends Component {
                 continue;
             }
 
+            if (!$field->options->multiple) {
+                if ($value instanceof \Symfony\Component\HttpFoundation\File\UploadedFile) {
+                    $data->put($field->name, $fileUploadService->fromUpload($value)->save());
+                    continue;
+                }
+
+                if (isset($value['uuid'])) {
+                    $data->put($field->name, $value);
+                    continue;
+                }
+                
+                $data->put($field->name, null);
+                continue;
+            }
+
             $files = is_array($value) ? $value : [$value];
             $files = array_filter($files);
             $processedFiles = [];
@@ -239,13 +254,13 @@ new class extends Component {
 
         $collectionId = $field->options->collection;
         $multiple = $field->options->multiple ?? false;
-        $selected = is_array($this->form[$fieldName]) ? $this->form[$fieldName] : [];
+        $selected = $this->form[$fieldName];
 
         $this->dispatch('open-relation-picker', collectionId: $collectionId, fieldName: $fieldName, selected: $selected, multiple: $multiple);
     }
 
     #[On('relation-selected')]
-    public function relationSelected(string $fieldName, array $selected): void
+    public function relationSelected(string $fieldName, array|string|null $selected): void
     {
         $this->form[$fieldName] = $selected;
     }
@@ -369,7 +384,8 @@ new class extends Component {
 
                     @case(FieldType::File)
                         <fieldset class="fieldset">
-                            <legend class="fieldset-legend">{{ $field->name }} <span class="text-error {{ $field->required == true ? '' : 'hidden' }}">*</span></legend>
+                            <legend class="fieldset-legend">{{ $field->name }} <span
+                                    class="text-error {{ $field->required == true ? '' : 'hidden' }}">*</span></legend>
                             <div wire:ignore x-data="{
                                 model: $wire.entangle('form.{{ $field->name }}'),
                                 fieldOptions: JSON.parse('{{ json_encode($field->options) }}'),
@@ -382,8 +398,12 @@ new class extends Component {
                                             if (f?.uuid) return { source: f.url, options: { type: 'local' } };
                                             return null;
                                         }).filter(f => f);
+                                    } else if (this.model?.uuid) {
+                                        initialFiles = [
+                                            { source: this.model?.url, options: { type: 'local' } }
+                                        ];
                                     }
-
+                            
                                     const extraOpts = {};
                                     extraOpts.allowMultiple = true;
                                     extraOpts.maxFiles = this.fieldOptions.multiple ? (this.fieldOptions.maxFiles || 999) : 1;
@@ -394,17 +414,17 @@ new class extends Component {
                                     if (this.fieldOptions.maxSize) {
                                         extraOpts.maxFileSize = this.fieldOptions.maxSize;
                                     }
-
+                            
                                     FilePond.create($refs.input, {
                                         files: initialFiles,
                                         credits: false,
                                         server: {
                                             process: (fieldName, file, metadata, load, error, progress, abort, transfer, options) => {
                                                 $wire.upload('form.{{ $field->name }}', file, load, error, progress);
+                            
                                                 return {
                                                     abort: () => {
                                                         $wire.cancelUpload('form.{{ $field->name }}');
-
                                                         abort();
                                                     }
                                                 };
@@ -420,7 +440,7 @@ new class extends Component {
                                                         load(new File([blob], name, { type: blob.type }));
                                                     })
                                                     .catch(err => error(err.message));
-
+                            
                                                 return {
                                                     abort: () => abort(),
                                                 };
@@ -431,18 +451,17 @@ new class extends Component {
                                         },
                                         onremovefile: (err, file) => {
                                             if (err) return;
-
+                            
                                             const source = file?.source;
                                             if (!source) return;
-
+                            
                                             const normalize = (item) => {
                                                 if (typeof item === 'string') return item;
                                                 if (item && typeof item === 'object' && item.url) return item.url;
                                                 return null;
                                             };
-
-                                            this.model = (this.model || []).filter((item) => normalize(item) !== source);
-                                            $wire.set('form.{{ $field->name }}', this.model);
+                            
+                                            this.model = this.fieldOptions.multiple ? (this.model || []).filter((item) => normalize(item) !== source) : null;
                                         },
                                         ...extraOpts,
                                     });
@@ -479,7 +498,9 @@ new class extends Component {
                                 <div
                                     class="input w-full h-auto min-h-10 py-2 flex flex-wrap gap-2 items-center {{ $errors->has("form.$field->name") || $errors->has("form.{$field->name}.*") ? 'input-error' : '' }}">
                                     @php
-                                        $selectedIds = $form[$field->name] ?? [];
+                                        $selectedIds = is_array($form[$field->name])
+                                            ? $form[$field->name]
+                                            : [$form[$field->name]];
                                         $relatedCollection = \App\Models\Collection::find($field->options->collection);
                                         $priority = config('velo.relation_display_fields');
                                         $displayField = $relatedCollection->fields

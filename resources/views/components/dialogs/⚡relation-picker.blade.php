@@ -18,12 +18,12 @@ new class extends Component {
         'multiple' => false,
         'search' => '',
         'records' => [],
-        'selected' => [],
+        'selected' => null,
         'displayField' => 'id',
     ];
 
     #[On('open-relation-picker')]
-    public function openRelationPicker(string $collectionId, string $fieldName, array $selected = [], bool $multiple = false): void
+    public function openRelationPicker(string $collectionId, string $fieldName, array|string|null $selected, bool $multiple = false): void
     {
         $collection = \App\Models\Collection::find($collectionId);
 
@@ -81,17 +81,19 @@ new class extends Component {
 
     public function toggleRelationRecord(string $recordId): void
     {
-        $selected = $this->relationPicker['selected'] ?? [];
+        $selected = $this->relationPicker['selected'];
+
+        if (!$this->relationPicker['multiple']) {
+            $this->relationPicker['selected'] = $selected == $recordId ? null : $recordId;
+            return;
+        }
 
         if (in_array($recordId, $selected)) {
             $this->relationPicker['selected'] = array_values(array_filter($selected, fn($id) => $id !== $recordId));
-        } else {
-            if ($this->relationPicker['multiple']) {
-                $this->relationPicker['selected'][] = $recordId;
-            } else {
-                $this->relationPicker['selected'] = [$recordId];
-            }
+            return;
         }
+
+        $this->relationPicker['selected'][] = $recordId;
     }
 
     public function saveRelationSelection(): void
@@ -127,7 +129,7 @@ new class extends Component {
         <div class="border border-base-300 rounded-md overflow-hidden max-h-96 overflow-y-auto">
             @if(!empty($relationPicker['records']))
                 @foreach($relationPicker['records'] as $record)
-                    @php($isSelected = in_array($record->data['id'], $relationPicker['selected'] ?? []))
+                    @php($isSelected = $relationPicker['multiple'] ? (in_array($record->data['id'], $relationPicker['selected'] ?? [])) : $record->data['id'] == $relationPicker['selected'])
 
                     <div
                         wire:key="relation-record-{{ $record->data['id'] }}"
@@ -177,7 +179,7 @@ new class extends Component {
             @else
                 <div class="flex flex-wrap gap-2">
                     <span
-                        class="text-sm text-gray-600">{{ count($relationPicker['selected']) }} record(s) selected</span>
+                        class="text-sm text-gray-600">{{ !$relationPicker['multiple'] ? '1' : count($relationPicker['selected']) }} record(s) selected</span>
                 </div>
             @endif
         </div>

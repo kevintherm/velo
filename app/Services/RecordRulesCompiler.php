@@ -124,7 +124,7 @@ class RecordRulesCompiler
         // Basic required/nullable rules
         if ($field->name === 'id') {
             $fieldRules[] = 'nullable';
-        } elseif ($field->required && $this->ignoreId == null) {
+        } elseif ($field->required) {
             $fieldRules[] = 'required';
         } else {
             $fieldRules[] = 'nullable';
@@ -265,9 +265,7 @@ class RecordRulesCompiler
                 break;
 
             case $options instanceof RelationFieldOption:
-                $isMultiple = $options->multiple || ($options->maxSelect && $options->maxSelect > 1);
-
-                if ($isMultiple) {
+                if ($options->multiple) {
                     $rules[] = 'array';
 
                     if ($options->minSelect !== null) {

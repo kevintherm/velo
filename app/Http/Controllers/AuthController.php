@@ -477,10 +477,6 @@ class AuthController extends Controller
             return response()->json(['message' => 'Collection is not auth enabled.'], 400);
         }
 
-        if (! isset($collection->options['auth_methods']['otp']) || ! $collection->options['auth_methods']['otp']['enabled']) {
-            return response()->json(['message' => 'OTP authentication is not enabled.'], 400);
-        }
-
         $request->validate([
             'id' => 'required_without:email',
             'email' => 'required_without:id|email',
@@ -524,7 +520,7 @@ class AuthController extends Controller
 
         $request->validate([
             'otp' => 'required|string',
-            'new_email' => ['required', 'email', 'confirmed'],
+            'new_email' => ['required', 'email'],
         ]);
 
         $reset = AuthOtp::where('collection_id', $collection->id)

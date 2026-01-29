@@ -234,9 +234,6 @@ new class extends Component {
         @endforeach
 
         @scope('cell_id', $row)
-        @if (!isset($row->id))
-            @dd($row)
-        @endif
         <div class="badge badge-soft badge-sm flex items-center gap-2 py-3.5" x-on:click.stop="">
             <p>{{ str($row->id)->limit(16) }}</p>
             <x-copy-button :text="$row->id"/>
@@ -279,7 +276,8 @@ new class extends Component {
             @if ($field->type === App\Enums\FieldType::Relation)
                 @cscope('cell_' . $field->name, $row, $field)
                 @php
-                    $relations = $row->{$field->name} ?? [];
+                    $relations = is_array($row->{$field->name}) ? $row->{$field->name} : [$row->{$field->name}];
+                    $relations = array_filter($relations);
                     $relatedCollections = App\Models\Collection::find($field->options->collection);
                 @endphp
                 @if (!empty($relations))
@@ -310,7 +308,8 @@ new class extends Component {
             @if ($field->type === App\Enums\FieldType::File)
                 @cscope('cell_' . $field->name, $row, $field)
                 @php
-                    $files = $row->{$field->name};
+                    $files = is_array($row->{$field->name}) ? $row->{$field->name} : [$row->{$field->name}];
+                    $files = array_filter($files);
                 @endphp
                 @if (!empty($files))
                     <div x-on:click.stop="" wire:ignore x-data="{
