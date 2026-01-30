@@ -25,8 +25,10 @@ class RecordController extends Controller
         $expand = $request->input('expand', '');
 
         // Apply list API rule as additional filter (interpolate @variables with actual values)
-        $listRule = $collection->api_rules['list'] ?? '';
-        if (! empty($listRule)) {
+        $listRule = $collection->api_rules['list'];
+        if ($listRule == 'SUPERUSER_ONLY') {
+            $filter = '1!=1';
+        } else {
             $context = [
                 'sys_request' => (object) [
                     'auth' => $request->user(),
