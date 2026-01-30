@@ -16,6 +16,10 @@ Schedule::call(function () {
     Artisan::call('migrate:fresh --seed');
 })->hourly();
 
+Schedule::call(function() {
+    Artisan::call('app:storage-cleanup');
+})->hourly();
+
 Schedule::call(function () {
     \App\Models\RealtimeConnection::pruneStale();
 })->everyMinute();
