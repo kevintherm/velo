@@ -458,6 +458,7 @@ new class extends Component {
                     $status = 'Updated';
                 } else {
                     User::create([
+                        'project_id' => 1,
                         'name' => $this->data['name'],
                         'email' => $this->data['email'],
                         'password' => $this->data['password'],
@@ -484,9 +485,7 @@ new class extends Component {
                     $record->save();
                     $status = 'Updated';
                 } else {
-                    $createData = [
-                        'project_id' => 1,
-                    ];
+                    $createData = [];
                     foreach ($this->data as $key => $value) {
                         if (array_key_exists($key, $this->formConfig)) {
                             if ($this->formConfig[$key]['readonly'] ?? false) {
