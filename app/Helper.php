@@ -35,8 +35,8 @@ class Helper
             'name' => 'users',
             'project_id' => $project->id,
             'type' => CollectionType::Auth,
-            'options' => [],
-            'api_rules' => [],
+            'options' => Collection::getDefaultAuthOptions(),
+            'api_rules' => Collection::getDefaultApiRules(),
         ]);
 
         $collectionFields = CollectionField::createAuthFrom([
