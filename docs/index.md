@@ -10,6 +10,11 @@ Velo is a Backend-as-a-Service (BaaS) kit for Laravel. It provides a dynamic dat
 
 It is heavily inspired by [PocketBase](https://pocketbase.io), but built natively for the Laravel ecosystem.
 
+## Demo
+
+- Velo: [Demo](https://demo.velophp.com)
+- Flashcard (Uses Velo as its backend): [Flashcard](https://kevintherm.github.io/velo-flashcard)
+
 ## Documentation
 
 ### Core
