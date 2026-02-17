@@ -10,9 +10,6 @@ use App\Domain\Collection\Models\Collection;
 use App\Domain\Field\Enums\FieldType;
 use App\Domain\Project\Exceptions\InvalidRuleException;
 use App\Domain\Record\Actions;
-use App\Domain\Record\Actions\ListRecords;
-use App\Domain\Record\Actions\ProcessRecordUploadedFiles;
-use App\Domain\Record\Actions\UpdateRecord;
 use App\Domain\Record\Authorization\RuleContext;
 use App\Domain\Record\Resources\RecordResource;
 use Illuminate\Http\JsonResponse;
@@ -62,14 +59,14 @@ class RecordController extends Controller
 
     public function create(RecordRequest $request, Collection $collection)
     {
-        $record = app(CreateRecord::class)->execute($request, $collection);
+        $record = app(Actions\CreateRecord::class)->execute($request, $collection);
         $resource = new RecordResource($record);
         return $this->success($resource);
     }
 
     public function update(RecordRequest $request, Collection $collection, string $recordId): JsonResponse
     {
-        $record = app(UpdateRecord::class)->execute($request, $collection, $recordId);
+        $record = app(Actions\UpdateRecord::class)->execute($request, $collection, $recordId);
         $resource = new RecordResource($record);
         return $this->success($resource);
     }
