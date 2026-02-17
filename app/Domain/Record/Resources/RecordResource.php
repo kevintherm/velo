@@ -25,16 +25,16 @@ class RecordResource extends JsonResource
 
             if ($field->type === FieldType::Relation && $field->options instanceof RelationFieldOption) {
                 $options = $field->options;
-                $isMultiple = $options->multiple || ($options->maxSelect && $options->maxSelect > 1);
+                $isMultiple = $options->multiple;
 
                 if (! $isMultiple && is_array($value)) {
                     $value = $value[0] ?? null;
                 }
             } elseif ($field->type === FieldType::File && $field->options instanceof FileFieldOption) {
                 $options = $field->options;
-                $isMultiple = $options->multiple || ($options->maxFiles && $options->maxFiles > 1);
+                $isMultiple = $options->multiple;
 
-                if (! $isMultiple && is_array($value)) {
+                if (! $isMultiple && is_array($value) && ! isset($value['uuid'])) {
                     $value = $value[0] ?? null;
                 }
             }

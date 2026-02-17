@@ -26,7 +26,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
                 $value = $data->get($field->name);
                 $data->put(
                     $field->name,
-                    $this->normalizeValue($value, $field->options->multiple)
+                    $this->normalizeValue($value, $field->options->multiple, $field)
                 );
             }
         }
@@ -229,7 +229,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
         $collection->recordIndexes()->where('record_id', $recordId)->delete();
     }
 
-    private function normalizeValue(mixed $value, bool $multiple): mixed
+    private function normalizeValue(mixed $value, bool $multiple, CollectionField $field): mixed
     {
         if ($multiple) {
             if ($value === null) {
@@ -241,6 +241,9 @@ class BaseCollectionHandler implements CollectionTypeHandler
             }
 
             return [$value];
+        }
+        if ($field->type === FieldType::File && isset($value['uuid']) && $value['uuid']) {
+            return $value;
         }
 
         if (is_array($value)) {

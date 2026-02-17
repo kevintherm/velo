@@ -5,9 +5,11 @@ namespace App\Domain\Record\Models;
 use App\Delivery\Casts\AsSafeCollection;
 use App\Delivery\Entity\SafeCollection;
 use App\Delivery\Services\RealtimeService;
+use App\Domain\Collection\Handlers\BaseCollectionHandler;
 use App\Domain\Collection\Handlers\CollectionTypeHandlerResolver;
 use App\Domain\Collection\Models\Collection;
 use App\Domain\Field\Enums\FieldType;
+use App\Domain\Hooks\Facades\Hooks;
 use App\Domain\Project\Exceptions\InvalidRecordException;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -57,16 +59,14 @@ class Record extends Model
     protected static function booted(): void
     {
         static::retrieved(function (Record $record) {
-            app(\App\Domain\Collection\Handlers\BaseCollectionHandler::class)->onRetrieved($record);
+            app(BaseCollectionHandler::class)->onRetrieved($record);
 
             $handler = CollectionTypeHandlerResolver::resolve($record->collection->type);
-            if ($handler) {
-                $handler->onRetrieved($record);
-            }
+            $handler?->onRetrieved($record);
 
             // Hook: record.retrieved
             $data = $record->data->toArray();
-            $data = \App\Domain\Hooks\Facades\Hooks::apply('record.retrieved', $data, [
+            $data = Hooks::apply('record.retrieved', $data, [
                 'collection' => $record->collection,
                 'record_id'  => $record->id,
             ]);
@@ -76,7 +76,7 @@ class Record extends Model
         static::creating(function (Record $record) {
             // Hook: record.creating
             $data = $record->data->toArray();
-            $data = \App\Domain\Hooks\Facades\Hooks::apply('record.creating', $data, [
+            $data = Hooks::apply('record.creating', $data, [
                 'collection' => $record->collection,
             ]);
             $record->data = new SafeCollection($data);
@@ -84,7 +84,7 @@ class Record extends Model
 
         static::created(function (Record $record) {
             // Hook: record.created
-            \App\Domain\Hooks\Facades\Hooks::trigger('record.created', [
+            Hooks::trigger('record.created', [
                 'collection' => $record->collection,
                 'record'     => $record->data->toArray(),
                 'record_id'  => $record->id,
@@ -94,7 +94,7 @@ class Record extends Model
         static::updating(function (Record $record) {
             // Hook: record.updating
             $data = $record->data->toArray();
-            $data = \App\Domain\Hooks\Facades\Hooks::apply('record.updating', $data, [
+            $data = Hooks::apply('record.updating', $data, [
                 'collection'    => $record->collection,
                 'record_id'     => $record->id,
                 'original_data' => $record->getOriginal('data')->toArray(),
@@ -104,7 +104,7 @@ class Record extends Model
 
         static::updated(function (Record $record) {
             // Hook: record.updated
-            \App\Domain\Hooks\Facades\Hooks::trigger('record.updated', [
+            Hooks::trigger('record.updated', [
                 'collection' => $record->collection,
                 'record'     => $record->data->toArray(),
                 'record_id'  => $record->id,
@@ -116,13 +116,13 @@ class Record extends Model
                 DB::beginTransaction();
 
                 // Hook: record.deleting
-                \App\Domain\Hooks\Facades\Hooks::trigger('record.deleting', [
+                Hooks::trigger('record.deleting', [
                     'collection' => $record->collection,
                     'record'     => $record->data->toArray(),
                     'record_id'  => $record->id,
                 ]);
 
-                app(\App\Domain\Collection\Handlers\BaseCollectionHandler::class)->beforeDelete($record);
+                app(BaseCollectionHandler::class)->beforeDelete($record);
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
@@ -132,7 +132,7 @@ class Record extends Model
 
         static::deleted(function (Record $record) {
             // Hook: record.deleted
-            \App\Domain\Hooks\Facades\Hooks::trigger('record.deleted', [
+            Hooks::trigger('record.deleted', [
                 'collection' => $record->collection,
                 'record'     => $record->data->toArray(),
                 'record_id'  => $record->id,
@@ -179,12 +179,10 @@ class Record extends Model
                 $record->data->put($field, self::defaultValueFor($fields[$field]->type));
             }
 
-            app(\App\Domain\Collection\Handlers\BaseCollectionHandler::class)->beforeSave($record);
+            app(BaseCollectionHandler::class)->beforeSave($record);
 
             $handler = CollectionTypeHandlerResolver::resolve($record->collection->type);
-            if ($handler) {
-                $handler->beforeSave($record);
-            }
+            $handler?->beforeSave($record);
 
             $dataKeys = $record->data->keys()->sort()->values()->toArray();
             $missingFields = array_diff($fieldNames, $dataKeys);

@@ -66,7 +66,7 @@ class EvaluateRuleExpression
             $parts = explode('.', $path);
 
             // Navigate through context using dot notation
-            $value = $this->context['sys_' . $parts[0]] ?? null;
+            $value = $this->context->{'sys_' . $parts[0]} ?? null;
             for ($i = 1; $i < count($parts); $i++) {
                 if ($value === null) {
                     break;

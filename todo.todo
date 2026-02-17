@@ -1,8 +1,10 @@
 BUG:
 
 TODO:
+- refactor controllers to use actions
 
 IMPROVEMENT:
+- unify fields normalization
 - checks variable datatype before using "in" rule expression
 - add verify email endpoint
 - validate apply hooks returned data.

@@ -11,7 +11,7 @@ class CollectionTypeHandlerResolver
     {
         return match ($type) {
             CollectionType::Auth => app(AuthCollectionHandler::class),
-            default              => null,
+            default => null,
         };
     }
 }

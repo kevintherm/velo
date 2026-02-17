@@ -9,7 +9,10 @@ use App\Domain\Collection\Enums\CollectionType;
 use App\Domain\Collection\Models\Collection;
 use App\Domain\Field\Enums\FieldType;
 use App\Domain\Project\Exceptions\InvalidRuleException;
+use App\Domain\Record\Actions\CreateRecord;
 use App\Domain\Record\Actions\ListRecords;
+use App\Domain\Record\Actions\ProcessRecordUploadedFiles;
+use App\Domain\Record\Actions\UpdateRecord;
 use App\Domain\Record\Authorization\RuleContext;
 use App\Domain\Record\Resources\RecordResource;
 use Illuminate\Http\JsonResponse;
@@ -29,8 +32,6 @@ class RecordController extends Controller
         $sort = $request->input('sort', '');
         $expand = $request->input('expand', '');
 
-        $context = RuleContext::fromRequest($request);
-
         $resources = app(ListRecords::class)->execute(
             $collection,
             $perPage,
@@ -38,7 +39,7 @@ class RecordController extends Controller
             $filter,
             $sort,
             $expand,
-            $context,
+            RuleContext::fromRequest($request),
         );
 
         return $this->success($resources);
@@ -54,7 +55,6 @@ class RecordController extends Controller
             ->firstOrFail();
 
         $record->setRelation('collection', $collection);
-
         $resource = new RecordResource($record);
 
         return $resource->response();
@@ -62,119 +62,22 @@ class RecordController extends Controller
 
     public function create(RecordRequest $request, Collection $collection)
     {
-        $data = new SafeCollection($request->validated());
-        $fields = $collection->fields;
-
-        $fileFields = $fields->filter(fn ($field) => $field->type === FieldType::File);
-        $fileUploadService = app(\App\Delivery\Services\HandleFileUpload::class)->forCollection($collection);
-
-        foreach ($fileFields as $field) {
-            $value = $data->get($field->name);
-            if (empty($value)) {
-                continue;
-            }
-
-            $files = is_array($value) ? $value : [$value];
-            $files = array_filter($files);
-            $processedFiles = [];
-
-            foreach ($files as $file) {
-                if ($file instanceof FileObject || is_array($file) && isset($file['uuid'])) {
-                    $processedFiles[] = $file;
-
-                    continue;
-                }
-
-                if (! $file instanceof UploadedFile) {
-                    continue;
-                }
-
-                $fileUploadService->fromUpload($file);
-
-                $processed = $fileUploadService->save();
-                if ($processed) {
-                    $processedFiles[] = $processed;
-                }
-            }
-
-            $data->put($field->name, $processedFiles);
-        }
-
-        $record = $collection->recordRelation()->create(['data' => $data->toArray()]);
-
+        $record = app(CreateRecord::class)->execute($request, $collection);
         $resource = new RecordResource($record);
-
         return $resource->response();
     }
 
     public function update(RecordRequest $request, Collection $collection, string $recordId): JsonResponse
     {
-        if ($collection->type === CollectionType::Auth && array_key_exists('email', $request->validated())) {
-            return response()->json([
-                'message' => 'Use request update email endpoint for updating email',
-            ], 400);
-        }
-
-        if ($collection->type === CollectionType::Auth && array_key_exists('password', $request->validated())) {
-            return response()->json([
-                'message' => 'Use reset password endpoint for updating password',
-            ], 400);
-        }
-
-        $data = new SafeCollection($request->validated());
-        $record = $collection->records()->filter('id', '=', $recordId)->firstRawOrFail();
-        $fields = $collection->fields;
-
-        $fileFields = $fields->filter(fn ($field) => $field->type === FieldType::File);
-        $fileUploadService = app(\App\Delivery\Services\HandleFileUpload::class)->forCollection($collection);
-
-        foreach ($fileFields as $field) {
-            $value = $data->get($field->name);
-            if (empty($value)) {
-                continue;
-            }
-
-            $files = is_array($value) ? $value : [$value];
-            $files = array_filter($files);
-            $processedFiles = [];
-
-            foreach ($files as $file) {
-                if ($file instanceof FileObject || is_array($file) && isset($file['uuid'])) {
-                    $processedFiles[] = $file;
-
-                    continue;
-                }
-
-                if (! $file instanceof UploadedFile) {
-                    continue;
-                }
-
-                $fileUploadService->fromUpload($file);
-
-                $processed = $fileUploadService->save();
-                if ($processed) {
-                    $processedFiles[] = $processed;
-                }
-            }
-
-            $data->put($field->name, $processedFiles);
-        }
-
-        $record->update([
-            'data' => [...$record->data->toArray(), ...$data->toArray()],
-        ]);
-
+        $record = app(UpdateRecord::class)->execute($request, $collection, $recordId);
         $resource = new RecordResource($record);
-
         return $resource->response();
     }
 
     public function delete(RecordRequest $request, Collection $collection, string $recordId): JsonResponse
     {
         $record = $collection->records()->filter('id', '=', $recordId)->firstRawOrFail();
-
         $record->delete();
-
         return Response::json([], 204);
     }
 }

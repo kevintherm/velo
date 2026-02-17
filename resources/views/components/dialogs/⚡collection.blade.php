@@ -1081,12 +1081,16 @@ new class extends Component {
                             @continue($apiRule == 'authenticate')
                             <fieldset class="fieldset">
                                 <legend class="fieldset-legend">{{ ucfirst($apiRule) }} Rule</legend>
-                                <x-textarea x-ref="apiRules{{ $apiRule }}" wire:model="collectionForm.api_rules.{{ $apiRule }}"
-                                            placeholder="{{ ucfirst($apiRule) }} Rule"
+                                <x-textarea
+                                    x-ref="apiRules{{ $apiRule }}"
+                                    wire:model="collectionForm.api_rules.{{ $apiRule }}"
+                                    placeholder="{{ ucfirst($apiRule) }} Rule"
                                 />
                                 <div class="label flex flex-wrap justify-between items-start gap-4">
                                     <span>Leave blank to grant everyone access.</span>
-                                    <x-button label="Toggle Superuser Only" class="btn-xs btn-outline btn" x-on:click="$refs.apiRules{{ $apiRule }}.value = $refs.apiRules{{ $apiRule }}.value ? '' : 'SUPERUSER_ONLY'" />
+                                    <x-button
+                                        label="Toggle Superuser Only" class="btn-xs btn-outline btn"
+                                        x-on:click="$wire.set('collectionForm.api_rules.{{ $apiRule }}', $wire.get('collectionForm.api_rules.{{ $apiRule }}') == '' ? 'SUPERUSER_ONLY' : '')"/>
                                 </div>
                             </fieldset>
                         @endforeach
