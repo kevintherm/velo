@@ -10,12 +10,14 @@ class ApiResponse
 {
     public static function success(
         mixed $data = null,
+        ?string $message,
         int $status = 200,
         array $meta = []
     ): JsonResponse {
         if ($data instanceof JsonResource) {
             return $data
                 ->additional([
+                    'message' => $message,
                     'success' => true,
                     'meta'    => $meta,
                 ])
@@ -25,6 +27,7 @@ class ApiResponse
 
         if ($data instanceof Paginator) {
             return response()->json([
+                'message' => $message,
                 'success' => true,
                 'data'    => $data->items(),
                 'meta'    => [
@@ -36,6 +39,7 @@ class ApiResponse
         }
 
         return response()->json([
+            'message' => $message,
             'success' => true,
             'data'    => $data,
             'meta'    => $meta,
@@ -48,6 +52,7 @@ class ApiResponse
         ?string $code = null
     ): JsonResponse {
         return response()->json([
+            'message' => $message,
             'success' => false,
             'data'    => null,
             'meta'    => null,

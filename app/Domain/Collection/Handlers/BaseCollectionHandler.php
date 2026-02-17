@@ -207,7 +207,7 @@ class BaseCollectionHandler implements CollectionTypeHandler
 
             // If cascadeDelete is false, throw an exception
             if (! $field->options?->cascadeDelete) {
-                throw new InvalidRecordException("Cannot delete record: it is referenced by {$indexes->count()} record(s) in field '{$field->name}' of collection '{$field->collection->name}'.");
+                throw new InvalidRecordException("Cannot delete record: it is referenced by {$indexes->count()} record(s) in field '{$field->name}' of collection '{$field->collection->name}'");
             }
 
             // cascadeDelete is true - delete referencing records

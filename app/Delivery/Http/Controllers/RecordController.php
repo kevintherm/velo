@@ -57,27 +57,27 @@ class RecordController extends Controller
         $record->setRelation('collection', $collection);
         $resource = new RecordResource($record);
 
-        return $resource->response();
+        return $this->success($resource);
     }
 
     public function create(RecordRequest $request, Collection $collection)
     {
         $record = app(CreateRecord::class)->execute($request, $collection);
         $resource = new RecordResource($record);
-        return $resource->response();
+        return $this->success($resource);
     }
 
     public function update(RecordRequest $request, Collection $collection, string $recordId): JsonResponse
     {
         $record = app(UpdateRecord::class)->execute($request, $collection, $recordId);
         $resource = new RecordResource($record);
-        return $resource->response();
+        return $this->success($resource);
     }
 
     public function delete(RecordRequest $request, Collection $collection, string $recordId): JsonResponse
     {
         $record = $collection->records()->filter('id', '=', $recordId)->firstRawOrFail();
         $record->delete();
-        return Response::json([], 204);
+        return $this->success(null, 'Record deleted successfully.');
     }
 }

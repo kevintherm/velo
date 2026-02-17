@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Project\Exceptions\InvalidRecordException;
+use App\Support\Http\ApiResponse;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -35,25 +36,19 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => $e->getMessage(),
-                ], 404);
+                return ApiResponse::error($e->getMessage(), 404);
             }
         });
 
         $exceptions->render(function (InvalidRecordException $e, Request $request) {
             if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => $e->getMessage(),
-                ], 409);
+                return ApiResponse::error($e->getMessage(), 400);
             }
         });
 
         $exceptions->render(function (UnauthorizedException $e, Request $request) {
             if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => $e->getMessage(),
-                ], 401);
+                return ApiResponse::error($e->getMessage(), 401);
             }
         });
     })

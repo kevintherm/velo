@@ -9,10 +9,11 @@ abstract class Controller
 {
     public function success(
         mixed $data = null,
+        ?string $message = null,
         int $status = 200,
         array $meta = []
     ): JsonResponse {
-        return ApiResponse::success($data, $status, $meta);
+        return ApiResponse::success($data, $message, $status, $meta);
     }
 
     public function error(
