@@ -22,9 +22,9 @@ class Collection extends Model
     protected function casts(): array
     {
         return [
-            'type'      => CollectionType::class,
+            'type' => CollectionType::class,
             'api_rules' => 'array',
-            'options'   => AsSafeCollection::class,
+            'options' => AsSafeCollection::class,
         ];
     }
 
@@ -33,7 +33,7 @@ class Collection extends Model
         return match ($this->type) {
             CollectionType::Auth => 'o-users',
             CollectionType::View => 'o-table-cells',
-            default              => 'o-archive-box',
+            default => 'o-archive-box',
         };
     }
 
@@ -70,8 +70,8 @@ class Collection extends Model
     public static function getDefaultApiRules(): array
     {
         return [
-            'list'   => '@request.auth.id = id',
-            'view'   => '@request.auth.id = id',
+            'list' => '@request.auth.id = id',
+            'view' => '@request.auth.id = id',
             'create' => '',
             'update' => '@request.auth.id = id',
             'delete' => '@request.auth.id = id',
@@ -81,8 +81,8 @@ class Collection extends Model
     public static function getLockedApiRules(): array
     {
         return [
-            'list'   => 'SUPERUSER_ONLY',
-            'view'   => 'SUPERUSER_ONLY',
+            'list' => 'SUPERUSER_ONLY',
+            'view' => 'SUPERUSER_ONLY',
             'create' => 'SUPERUSER_ONLY',
             'update' => 'SUPERUSER_ONLY',
             'delete' => 'SUPERUSER_ONLY',
@@ -95,17 +95,17 @@ class Collection extends Model
             'auth_methods' => [
                 'standard' => [
                     'enabled' => true,
-                    'fields'  => ['email'],
+                    'fields' => ['email'],
                 ],
                 'oauth2' => [
-                    'enabled'   => false,
+                    'enabled' => false,
                     'providers' => [],
-                    'config'    => [],
+                    'config' => [],
                 ],
                 'otp' => [
                     'enabled' => false,
-                    'config'  => [
-                        'duration_s'               => 180,
+                    'config' => [
+                        'duration_s' => 180,
                         'generate_password_length' => 8,
                     ],
                 ],
@@ -113,7 +113,7 @@ class Collection extends Model
             'mail_templates' => [
                 'otp_email' => [
                     'subject' => 'Your OTP Code',
-                    'body'    => <<<'HTML'
+                    'body' => <<<'HTML'
 <p>Hello,</p>
 <p>Your OTP code is: <strong>{{otp}}</strong></p>
 <p>This code will expires in {{expires}}.</p>
@@ -123,7 +123,7 @@ HTML,
                 ],
                 'login_alert' => [
                     'subject' => 'Login Alert',
-                    'body'    => <<<'HTML'
+                    'body' => <<<'HTML'
 <p>Hello,</p>
 <p>We noticed a new login to your account.</p>
 <p>
@@ -140,23 +140,23 @@ HTML,
             'other' => [
                 'tokens_options' => [
                     'auth_duration' => [
-                        'value'                      => '1209600',
+                        'value' => '1209600',
                         'invalidate_previous_tokens' => false,
                     ],
                     'email_verification' => [
-                        'value'                      => '604800',
+                        'value' => '604800',
                         'invalidate_previous_tokens' => false,
                     ],
                     'password_reset_duration' => [
-                        'value'                      => '1800',
+                        'value' => '1800',
                         'invalidate_previous_tokens' => false,
                     ],
                     'email_change_duration' => [
-                        'value'                      => '1800',
+                        'value' => '1800',
                         'invalidate_previous_tokens' => false,
                     ],
                     'protected_file_access_duration' => [
-                        'value'                      => '120',
+                        'value' => '120',
                         'invalidate_previous_tokens' => false,
                     ],
                 ],
@@ -168,18 +168,18 @@ HTML,
     {
         static::saving(function (Collection $collection) {
             if ($collection->api_rules == null && $collection->type === CollectionType::Base) {
-                $collection->api_rules = static::getDefaultApiRules();
+                $collection->api_rules = static::getLockedApiRules();
             }
 
             if ($collection->api_rules == null && $collection->type === CollectionType::Auth) {
                 $collection->api_rules = [
                     'authenticate' => '',
-                    'manage'       => 'SUPERUSER_ONLY',
-                    'list'         => '@request.auth.id = id',
-                    'view'         => '@request.auth.id = id',
-                    'create'       => '',
-                    'update'       => '@request.auth.id = id',
-                    'delete'       => 'SUPERUSER_ONLY',
+                    'manage' => 'SUPERUSER_ONLY',
+                    'list' => '@request.auth.id = id',
+                    'view' => '@request.auth.id = id',
+                    'create' => '',
+                    'update' => '@request.auth.id = id',
+                    'delete' => 'SUPERUSER_ONLY',
                 ];
             }
 

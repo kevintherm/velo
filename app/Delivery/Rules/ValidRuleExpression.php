@@ -8,25 +8,24 @@ use Symfony\Component\ExpressionLanguage\SyntaxError;
 
 class ValidRuleExpression implements ValidationRule
 {
-    private $el;
-
+    private ExpressionLanguage $el;
     private array $varNames = [];
 
-    public function __construct(?array $varNames)
+    public function __construct(array $varNames = [])
     {
         $this->el = new ExpressionLanguage();
-        $this->varNames = $varNames ?? [];
+        $this->varNames = $varNames;
     }
 
     /**
      * Run the validation rule.
      *
-     * @param  \Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
+     * @param \Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString $fail
      */
     public function validate(string $attribute, mixed $value, \Closure $fail): void
     {
         try {
-            if (! \is_string($value)) {
+            if (!\is_string($value)) {
                 $fail('Rule must be a string.');
             }
 
@@ -59,7 +58,7 @@ class ValidRuleExpression implements ValidationRule
             }
 
             // Rule must contain at least one comparison operator
-            if (! preg_match('/(=|!=|>=|<=|>|<|LIKE)/i', $rawRule)) {
+            if (!preg_match('/(=|!=|>=|<=|>|<|like|LIKE|in|IN)/i', $rawRule)) {
                 $fail('Rule must be an expression with field and operator (e.g., "field = value").');
 
                 return;

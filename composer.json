@@ -65,7 +65,7 @@
         ],
         "dev:sail": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#c4b5fd,#fb7185,#fdba74\" \"sail artisan queue:listen --tries=1\" \"sail artisan pail --timeout=0\" \"bun run dev\" --names=queue,logs,vite --kill-others"
+            "npx concurrently -c \"#c4b5fd,#fb7185,#fdba74\" \"./vendor/bin/sail artisan queue:listen --tries=1\" \"./vendor/bin/sail artisan pail --timeout=0\" \"bun run dev\" --names=queue,logs,vite --kill-others"
         ],
         "test": [
             "@php artisan config:clear --ansi",

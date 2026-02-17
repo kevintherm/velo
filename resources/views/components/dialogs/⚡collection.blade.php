@@ -1079,10 +1079,16 @@ new class extends Component {
                     <div class="space-y-4 px-0.5">
                         @foreach ($collectionForm['api_rules'] as $apiRule => $value)
                             @continue($apiRule == 'authenticate')
-                            <x-textarea wire:model="collectionForm.api_rules.{{ $apiRule }}"
-                                        label="{{ ucfirst($apiRule) }} Rule"
-                                        placeholder="{{ ucfirst($apiRule) }} Rule. Leave blank to grant everyone access."
-                                        inline/>
+                            <fieldset class="fieldset">
+                                <legend class="fieldset-legend">{{ ucfirst($apiRule) }} Rule</legend>
+                                <x-textarea x-ref="apiRules{{ $apiRule }}" wire:model="collectionForm.api_rules.{{ $apiRule }}"
+                                            placeholder="{{ ucfirst($apiRule) }} Rule"
+                                />
+                                <div class="label flex flex-wrap justify-between items-start gap-4">
+                                    <span>Leave blank to grant everyone access.</span>
+                                    <x-button label="Toggle Superuser Only" class="btn-xs btn-outline btn" x-on:click="$refs.apiRules{{ $apiRule }}.value = $refs.apiRules{{ $apiRule }}.value ? '' : 'SUPERUSER_ONLY'" />
+                                </div>
+                            </fieldset>
                         @endforeach
 
                         @if ($this->collection->type === \App\Domain\Collection\Enums\CollectionType::Auth)
