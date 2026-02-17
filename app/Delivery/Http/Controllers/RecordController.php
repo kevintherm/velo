@@ -9,7 +9,7 @@ use App\Domain\Collection\Enums\CollectionType;
 use App\Domain\Collection\Models\Collection;
 use App\Domain\Field\Enums\FieldType;
 use App\Domain\Project\Exceptions\InvalidRuleException;
-use App\Domain\Record\Actions\CreateRecord;
+use App\Domain\Record\Actions;
 use App\Domain\Record\Actions\ListRecords;
 use App\Domain\Record\Actions\ProcessRecordUploadedFiles;
 use App\Domain\Record\Actions\UpdateRecord;
@@ -32,7 +32,7 @@ class RecordController extends Controller
         $sort = $request->input('sort', '');
         $expand = $request->input('expand', '');
 
-        $resources = app(ListRecords::class)->execute(
+        $resources = Actions\ListRecords::execute(
             $collection,
             $perPage,
             $page,
